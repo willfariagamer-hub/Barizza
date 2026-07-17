@@ -1,10 +1,9 @@
 const { neon } = require('@neondatabase/serverless');
 
-const sql = neon(process.env.DATABASE_URL);
 const ROW_ID = 'building';
-
 let tableReady = false;
-async function ensureTable() {
+
+async function ensureTable(sql) {
   if (tableReady) return;
   await sql`
     CREATE TABLE IF NOT EXISTS predio_data (
@@ -18,14 +17,18 @@ async function ensureTable() {
 
 module.exports = async (req, res) => {
   try {
-    await ensureTable();
+    if (!process.env.DATABASE_URL) {
+      res.status(500).json({ error: 'DATABASE_URL não configurada nas variáveis de ambiente da Vercel' });
+      return;
+    }
+    const sql = neon(process.env.DATABASE_URL);
+    await ensureTable(sql);
 
     if (req.method === 'GET') {
       const rows = await sql`SELECT payload FROM predio_data WHERE id = ${ROW_ID}`;
       res.status(200).json(rows[0] ? rows[0].payload : null);
       return;
     }
-
     if (req.method === 'POST') {
       const payload = req.body;
       if (!payload || typeof payload !== 'object') {
@@ -41,7 +44,6 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true });
       return;
     }
-
     res.setHeader('Allow', 'GET, POST');
     res.status(405).json({ error: 'method not allowed' });
   } catch (err) {
