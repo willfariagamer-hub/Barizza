@@ -958,6 +958,7 @@
         </div>
         <div class="fin-details">
           ${e.formaPagamento ? `<span class="fin-tag">${PAGTO_LABELS[e.formaPagamento]||e.formaPagamento}</span>` : ''}
+          ${e.vencimento ? `<span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">vence ${fmtDate(e.vencimento)}</span>` : ''}
           ${e.comprovante ? `<a class="fin-tag fin-link" href="${escapeAttr(e.comprovante)}" target="_blank" rel="noopener">comprovante ↗</a>` : ''}
         </div>
         ${e.obs ? `<div class="aviso-msg" style="margin-top:6px;">${escapeHtml(e.obs)}</div>` : ''}
@@ -1043,6 +1044,21 @@
           <input type="text" id="financeiro-pin-input" value="${escapeAttr(data.financeiroPin)}" maxlength="6">
         </div>
         <button class="ghost-btn" data-action="save-financeiro-pin">Salvar senha</button>
+      </div>
+
+      <div class="settings-block">
+        <div class="settings-block-title">Backup dos dados</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">
+          Exporte tudo que está cadastrado (unidades, avisos, financeiro) num arquivo,
+          ou importe um arquivo exportado anteriormente (por exemplo, do app dentro do Claude).
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="ghost-btn small-btn" data-action="export-backup">Exportar dados (.json)</button>
+          <label class="ghost-btn small-btn" style="cursor:pointer;display:inline-block;">
+            Importar dados (.json)
+            <input type="file" id="import-backup-input" accept="application/json" style="display:none;">
+          </label>
+        </div>
       </div>
     `;
   }
@@ -1215,6 +1231,7 @@
                 <option value="cartao">Cartão</option>
               </select>
             </div>
+            <div class="field" id="fin-boleto-field" style="display:none;"><label>Data de vencimento do boleto</label><input type="date" id="fin-boleto-vencimento"></div>
             <div class="field"><label>Comprovante (link)</label><input type="text" id="fin-comprovante" placeholder="Cole aqui o link da foto/PDF do comprovante"></div>
             <div class="field"><label>Unidade (opcional)</label>
               <select id="fin-unit"><option value="">—</option>${data.units.map(u=>`<option value="${u.id}">${u.id}</option>`).join('')}</select>
@@ -1372,6 +1389,13 @@
     if(openAviso) openAviso.onclick = ()=>{ ui.modal='aviso'; render(); };
     const openFin = app.querySelector('[data-action="open-fin-modal"]');
     if(openFin) openFin.onclick = ()=>{ if(!isSindico()) return; ui.modal='financeiro'; render(); };
+    const finPagtoSelect = app.querySelector('#fin-pagto');
+    const finBoletoField = app.querySelector('#fin-boleto-field');
+    if(finPagtoSelect && finBoletoField){
+      const toggleBoletoField = ()=>{ finBoletoField.style.display = finPagtoSelect.value === 'boleto' ? 'block' : 'none'; };
+      finPagtoSelect.onchange = toggleBoletoField;
+      toggleBoletoField();
+    }
     const finMonthFilter = app.querySelector('#fin-month-filter');
     if(finMonthFilter) finMonthFilter.onchange = ()=>{ ui.finMonthFilter = finMonthFilter.value; render(); };
     const openFundoAporte = app.querySelector('[data-action="open-fundo-aporte"]');
@@ -1516,11 +1540,12 @@
       const amount = parseFloat(app.querySelector('#fin-amount').value);
       const date = app.querySelector('#fin-date').value || todayISO();
       const formaPagamento = app.querySelector('#fin-pagto').value;
+      const vencimento = formaPagamento === 'boleto' ? (app.querySelector('#fin-boleto-vencimento').value || null) : null;
       const comprovante = app.querySelector('#fin-comprovante').value.trim();
       const unit = app.querySelector('#fin-unit').value;
       const obs = app.querySelector('#fin-obs').value.trim();
       if(!conta || isNaN(amount)) return;
-      data.financial.entries.push({ id:'f_'+Date.now(), type, conta, amount, date, formaPagamento, comprovante, unit: unit||null, obs });
+      data.financial.entries.push({ id:'f_'+Date.now(), type, conta, amount, date, formaPagamento, vencimento, comprovante, unit: unit||null, obs });
       ui.modal = null;
       render();
       await saveData();
@@ -1604,6 +1629,40 @@
       render();
       await saveData();
       showToast('Senha do financeiro atualizada.');
+    };
+
+    const exportBackup = app.querySelector('[data-action="export-backup"]');
+    if(exportBackup) exportBackup.onclick = ()=>{
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'predio-backup-' + todayISO() + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    const importBackupInput = app.querySelector('#import-backup-input');
+    if(importBackupInput) importBackupInput.onchange = async ()=>{
+      const file = importBackupInput.files[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        if(!imported || typeof imported !== 'object' || !Array.isArray(imported.units)){
+          showToast('Arquivo inválido — não parece um backup deste app.');
+          return;
+        }
+        data = imported;
+        if(!data.financial) data.financial = { entries: [], fundoObra: { movements: [] }, contasFixas: [] };
+        if(!data.financial.fundoObra) data.financial.fundoObra = { movements: [] };
+        if(!data.financial.contasFixas) data.financial.contasFixas = [];
+        render();
+        await saveData();
+        showToast('Backup importado com sucesso.');
+      }catch(e){
+        showToast('Não consegui ler esse arquivo.');
+      }
     };
 
     app.querySelectorAll('[data-action="toggle-unit-menu"]').forEach(el=>{
