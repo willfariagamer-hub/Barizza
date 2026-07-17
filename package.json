@@ -1,0 +1,9 @@
+{
+  "name": "predio-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portaria digital do predio - mural de avisos, financeiro e unidades",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}

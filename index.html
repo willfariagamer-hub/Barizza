@@ -1,0 +1,1759 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#12161d;
+    --surface:#1b222c;
+    --surface-2:#232b37;
+    --paper:#f6f2e7;
+    --paper-2:#efe8d6;
+    --brass:#c6a15b;
+    --brass-dim:#8f793f;
+    --teal:#4f8b7f;
+    --brick:#a6503b;
+    --steel:#5c7fa6;
+    --neutral:#8a8f98;
+    --text:#eeeade;
+    --text-dim:#a9a89e;
+    --text-dark:#1b222c;
+    --line:rgba(238,234,222,0.12);
+    --line-strong:rgba(238,234,222,0.22);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html, body{margin:0;height:100%;background:#12161d;}
+  #app{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Fraunces',serif;}
+
+  button{font-family:inherit;cursor:pointer;}
+  input, select, textarea{font-family:inherit;}
+
+  /* ---------- LOGIN / DIRECTORY BOARD ---------- */
+  .login-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    min-height:600px;
+  }
+  .board-frame{
+    width:100%;
+    max-width:640px;
+    background:linear-gradient(160deg, #2a2118 0%, #1c150f 100%);
+    border-radius:20px;
+    padding:28px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+    position:relative;
+    border:1px solid #3a2e1e;
+  }
+  .board-frame::before, .board-frame::after,
+  .board-screw-tl, .board-screw-tr, .board-screw-bl, .board-screw-br{
+    content:'';
+    position:absolute;
+    width:8px;height:8px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #a8874f, #4a3b22 70%);
+    box-shadow:0 1px 2px rgba(0,0,0,0.6);
+  }
+  .board-frame::before{top:14px;left:14px;}
+  .board-frame::after{top:14px;right:14px;}
+  .board-screw-bl{bottom:14px;left:14px;}
+  .board-screw-br{bottom:14px;right:14px;}
+
+  .board-header{
+    text-align:center;
+    margin-bottom:22px;
+    padding-bottom:18px;
+    border-bottom:1px solid rgba(198,161,91,0.25);
+  }
+  .board-eyebrow{
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin-bottom:6px;
+  }
+  .board-title{
+    font-size:28px;
+    color:var(--paper);
+    font-weight:600;
+    margin:0;
+  }
+  .board-sub{
+    color:#a99a7c;
+    font-size:13px;
+    margin-top:4px;
+  }
+
+  .tile-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .tile{
+    background:linear-gradient(160deg, var(--paper) 0%, var(--paper-2) 100%);
+    border-radius:8px;
+    padding:16px 8px;
+    text-align:center;
+    border:1px solid rgba(0,0,0,0.15);
+    box-shadow:0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+    color:var(--text-dark);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .tile:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5);}
+  .tile-num{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;letter-spacing:0.02em;}
+  .tile-label{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#6b6455;margin-top:3px;}
+
+  .admin-tile{
+    grid-column:span 3;
+    background:linear-gradient(160deg, #2f261a 0%, #221a10 100%);
+    color:var(--brass);
+    border:1px solid rgba(198,161,91,0.35);
+    box-shadow:none;
+  }
+  .admin-tile:hover{box-shadow:0 6px 14px rgba(0,0,0,0.35);}
+  .admin-tile .tile-num{color:var(--brass);font-size:14px;letter-spacing:0.1em;text-transform:uppercase;}
+  .admin-tile .tile-label{color:#a99a7c;}
+
+  .role-grid{grid-template-columns:1fr;}
+  .role-grid .admin-tile{grid-column:auto;padding:22px 8px;}
+  .role-grid .admin-tile .tile-num{font-size:18px;}
+
+  .pin-panel{
+    background:var(--paper);
+    border-radius:10px;
+    padding:18px;
+    color:var(--text-dark);
+    margin-top:4px;
+  }
+  .pin-panel-title{font-size:13px;font-weight:600;margin-bottom:10px;}
+  .pin-row{display:flex;gap:8px;}
+  .pin-row input{
+    flex:1;
+    padding:11px 12px;
+    border-radius:7px;
+    border:1px solid #d8cfb8;
+    font-size:15px;
+    letter-spacing:0.15em;
+  }
+  .pin-row button{
+    padding:11px 18px;
+    border-radius:7px;
+    border:none;
+    background:var(--text-dark);
+    color:var(--paper);
+    font-weight:600;
+    font-size:13px;
+  }
+  .pin-cancel{
+    display:block;
+    margin:10px auto 0;
+    background:none;
+    border:none;
+    color:#8a8478;
+    font-size:12px;
+    text-decoration:underline;
+  }
+  .pin-error{color:var(--brick);font-size:12px;margin-top:6px;}
+
+  /* ---------- DASHBOARD ---------- */
+  .app-shell{flex:1;display:flex;flex-direction:column;min-height:600px;}
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 22px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface);
+  }
+  .topbar-id{display:flex;align-items:center;gap:10px;}
+  .topbar-badge{
+    width:36px;height:36px;border-radius:8px;
+    background:linear-gradient(160deg, var(--brass) 0%, var(--brass-dim) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;color:#1b1610;
+  }
+  .topbar-name{font-size:14px;font-weight:600;}
+  .topbar-role{font-size:11px;color:var(--text-dim);}
+  .logout-btn{
+    background:none;border:1px solid var(--line-strong);color:var(--text-dim);
+    padding:7px 14px;border-radius:7px;font-size:12px;
+  }
+  .logout-btn:hover{color:var(--text);border-color:var(--text-dim);}
+
+  .tabs{
+    display:flex;gap:4px;padding:10px 22px 0;
+    border-bottom:1px solid var(--line);
+    background:var(--surface);
+    overflow-x:auto;
+  }
+  .tab-btn{
+    background:none;border:none;color:var(--text-dim);
+    padding:10px 14px;font-size:13px;font-weight:500;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+  }
+  .tab-btn.active{color:var(--brass);border-bottom-color:var(--brass);}
+  .tab-badge{
+    display:inline-block;background:var(--brass);color:#1b1610;font-size:10px;font-weight:700;
+    border-radius:10px;padding:1px 7px;margin-left:2px;
+  }
+
+  .content{flex:1;padding:22px;max-width:920px;width:100%;margin:0 auto;}
+
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .section-title{font-family:'Fraunces',serif;font-size:22px;font-weight:600;}
+  .primary-btn{
+    background:var(--brass);color:#1b1610;border:none;
+    padding:10px 16px;border-radius:8px;font-weight:600;font-size:13px;
+  }
+  .primary-btn:hover{background:#d4af6a;}
+  .ghost-btn{
+    background:none;border:1px solid var(--line-strong);color:var(--text);
+    padding:9px 14px;border-radius:8px;font-size:12px;
+  }
+
+  .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .chip{
+    padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;
+    border:1px solid var(--line-strong);color:var(--text-dim);background:none;
+  }
+  .chip.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin-bottom:12px;
+  }
+  .aviso-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .type-badge{
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+    padding:3px 9px;border-radius:5px;color:#12161d;
+  }
+  .aviso-meta{font-size:11px;color:var(--text-dim);margin-left:auto;}
+  .aviso-title{font-size:15px;font-weight:600;margin:2px 0 4px;}
+  .aviso-msg{font-size:13.5px;color:#cfccc0;line-height:1.55;white-space:pre-wrap;}
+  .aviso-del{background:none;border:none;color:var(--text-dim);font-size:11px;margin-top:8px;text-decoration:underline;padding:0;}
+  .card-actions-row{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .card-actions-row .aviso-del{margin-top:0;margin-left:auto;}
+  .approve-btn{color:var(--teal);border-color:rgba(79,139,127,0.4);padding:6px 12px;font-size:11px;}
+  .reject-btn{color:var(--brick);border-color:rgba(166,80,59,0.4);padding:6px 12px;font-size:11px;}
+
+  .empty{
+    text-align:center;color:var(--text-dim);font-size:13px;
+    padding:40px 20px;border:1px dashed var(--line-strong);border-radius:var(--radius);
+  }
+
+  /* financial */
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+  @media (max-width:700px){
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+  }
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;}
+  .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:6px;}
+  .stat-value{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;}
+  .pos{color:var(--teal);} .neg{color:var(--brick);}
+
+  .fin-summary-row{margin-bottom:8px;}
+  .fin-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .fin-month-select{
+    background:var(--surface);border:1px solid var(--line-strong);color:var(--text);
+    padding:7px 10px;border-radius:8px;font-size:12px;margin-bottom:10px;max-width:220px;
+  }
+  .stat-row.compact{margin-bottom:14px;}
+  .stat-row.compact .stat-card{padding:10px 12px;}
+  .stat-row.compact .stat-value{font-size:15px;}
+  .stat-row.compact .stat-label{font-size:9px;margin-bottom:3px;}
+
+  .fundo-compact{padding:12px 16px;margin-bottom:12px;}
+  .fundo-compact-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .fundo-balance{font-size:19px;font-weight:600;color:var(--brass);}
+  .small-btn{padding:6px 11px;font-size:11px;}
+
+  .collapse-block summary{
+    cursor:pointer;font-size:11px;color:var(--text-dim);list-style:none;
+    display:flex;align-items:center;gap:4px;user-select:none;
+  }
+  .collapse-block summary::-webkit-details-marker{display:none;}
+  .collapse-block summary::before{content:'▸';font-size:9px;color:var(--brass);transition:transform .15s;}
+  .collapse-block[open] summary::before{transform:rotate(90deg);}
+  .legend-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  .fin-top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .fin-details{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+  .fin-tag{
+    font-size:11px;padding:3px 9px;border-radius:12px;
+    background:var(--surface-2);border:1px solid var(--line-strong);color:var(--text-dim);
+  }
+  .fin-link{color:var(--brass);text-decoration:none;border-color:rgba(198,161,91,0.35);}
+  .fin-link:hover{text-decoration:underline;}
+  th{text-align:left;color:var(--text-dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;padding:8px 10px;border-bottom:1px solid var(--line-strong);}
+  td{padding:10px 10px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .amt-pos{color:var(--teal);font-family:'IBM Plex Mono',monospace;}
+  .amt-neg{color:var(--brick);font-family:'IBM Plex Mono',monospace;}
+  .amt-corte{color:var(--steel);font-family:'IBM Plex Mono',monospace;}
+  .row-del{background:none;border:none;color:var(--text-dim);font-size:11px;cursor:pointer;}
+  .fin-card{padding:12px 14px;margin-bottom:8px;}
+
+  .locked{
+    text-align:center;padding:60px 20px;color:var(--text-dim);
+  }
+  .locked-icon{font-size:32px;margin-bottom:10px;}
+
+  /* forms / modal */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);
+    display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;
+  }
+  .modal{
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px;
+    padding:22px;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
+  }
+  .modal-title{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-bottom:16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;}
+  .field input, .field select, .field textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line-strong);color:var(--text);
+    padding:10px 12px;border-radius:8px;font-size:14px;
+  }
+  .field textarea{min-height:90px;resize:vertical;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+
+  /* settings */
+  .unit-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .unit-row:last-child{border-bottom:none;}
+  .unit-row .u-id{font-family:'IBM Plex Mono',monospace;width:52px;color:var(--brass);}
+  .u-id-input{
+    width:64px;background:var(--bg);border:1px solid var(--line-strong);color:var(--brass);
+    padding:6px 8px;border-radius:6px;font-weight:600;font-size:13px;flex-shrink:0;
+  }
+  .unit-row input[type=text]{
+    width:80px;background:var(--bg);border:1px solid var(--line-strong);color:var(--text);
+    padding:6px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:13px;
+  }
+  .switch{position:relative;width:38px;height:21px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:var(--line-strong);border-radius:20px;transition:.15s;cursor:pointer;}
+  .slider::before{content:'';position:absolute;width:15px;height:15px;left:3px;top:3px;background:var(--paper);border-radius:50%;transition:.15s;}
+  input:checked + .slider{background:var(--teal);}
+  input:checked + .slider::before{transform:translateX(17px);}
+  .settings-block{margin-bottom:26px;}
+  .settings-block-title{font-size:13px;font-weight:600;color:var(--brass);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;}
+
+  /* unidades */
+  .unit-card{
+    display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;flex-wrap:wrap;
+  }
+  .unit-card-info{flex:1;min-width:140px;}
+  .unit-card-owner{font-size:13.5px;font-weight:600;}
+  .unit-card-tenant{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .unit-card-phone{font-size:11.5px;color:var(--brass);text-decoration:none;display:block;margin-top:1px;}
+  .unit-card-phone:hover{text-decoration:underline;}
+  .issue-row{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+  .issue-row-top{display:flex;align-items:center;justify-content:space-between;}
+  .unit-menu-wrap{position:relative;flex-shrink:0;}
+  .kebab-btn{
+    background:none;border:1px solid var(--line-strong);color:var(--text-dim);
+    width:32px;height:32px;border-radius:8px;font-size:16px;line-height:1;
+  }
+  .kebab-btn:hover{color:var(--text);border-color:var(--text-dim);}
+  .unit-menu{
+    position:absolute;right:0;top:38px;z-index:20;
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:10px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.35);min-width:180px;overflow:hidden;
+  }
+  .unit-menu button{
+    display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);
+    padding:10px 14px;font-size:13px;
+  }
+  .unit-menu button:hover{background:var(--surface);}
+  .unit-menu button + button{border-top:1px solid var(--line);}
+
+  .cf-row{border-top:1px solid var(--line);padding:10px 0;}
+  .cf-row:first-of-type{border-top:none;}
+  .cf-row-main{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .cf-row-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .cf-valor-input{
+    width:130px;background:var(--bg);border:1px solid var(--line-strong);color:var(--text);
+    padding:6px 8px;border-radius:6px;font-size:13px;
+  }
+  .cf-warning{
+    background:rgba(166,80,59,0.12);border:1px solid rgba(166,80,59,0.35);color:var(--brick);
+    border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;
+  }
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--text);color:var(--bg);padding:10px 18px;border-radius:8px;
+    font-size:13px;font-weight:500;z-index:60;box-shadow:0 8px 20px rgba(0,0,0,0.3);
+  }
+
+  @media (max-width:520px){
+    .tile-grid{grid-template-columns:repeat(3,1fr);}
+    .board-title{font-size:22px;}
+    .stat-row{grid-template-columns:1fr;}
+    .content{padding:16px;}
+    table{font-size:12px;}
+    th,td{padding:8px 6px;}
+  }
+</style>
+
+<div id="app"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'predio-data-v1';
+  let data = null;
+  let session = { role: null }; // role: null | 'sindico' | 'financeiro'
+  let ui = { tab:'mural', filterType:'todos', finMonthFilter:'todos', finShowOnlyFixas:false, modal:null, detailUnitId:null, unitMenuOpen:null, pinTarget:null, pinValue:'', pinError:'' };
+
+  const TYPES = {
+    mudanca:   { label:'Mudança',    color:'var(--brass)' },
+    obra:      { label:'Obra',       color:'var(--brick)' },
+    manutencao:{ label:'Manutenção', color:'var(--teal)'  },
+    assembleia:{ label:'Assembleia', color:'var(--steel)' },
+    geral:     { label:'Geral',      color:'var(--neutral)'}
+  };
+
+  function dayOfWeekFromISO(dateStr){
+    const [y,m,d] = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(y, m-1, d)).getUTCDay(); // 0=domingo ... 6=sábado
+  }
+  function slotsForDate(dateStr){
+    if(!dateStr) return [];
+    const dow = dayOfWeekFromISO(dateStr);
+    if(dow === 0) return []; // domingo: sem mudanças
+    if(dow === 6) return ['08:00-09:00','09:00-10:00','10:00-11:00','11:00-12:00'];
+    return ['08:00-09:00','09:00-10:00','10:00-11:00','11:00-12:00','12:00-13:00','13:00-14:00','14:00-15:00','15:00-16:00','16:00-17:00'];
+  }
+  function takenMoveSlots(dateStr, excludeId){
+    return new Set(
+      data.announcements
+        .filter(a => a.type==='mudanca' && a.moveDate===dateStr && a.id!==excludeId)
+        .map(a => a.moveSlot)
+    );
+  }
+  function formatSlot(slot){
+    return slot ? slot.replace('-','–') : '';
+  }
+
+  function defaultUnits(){
+    const floors = [1,2,3,4,5,6];
+    const units = [];
+    floors.forEach(f => {
+      units.push({ id: f+'01', proprietario:'', proprietarioTelefone:'', inquilino:'', inquilinoTelefone:'', history:[], issues:[] });
+      units.push({ id: f+'02', proprietario:'', proprietarioTelefone:'', inquilino:'', inquilinoTelefone:'', history:[], issues:[] });
+    });
+    return units;
+  }
+
+  function defaultData(){
+    return {
+      buildingName: 'Residencial',
+      sindicoPin: '0000',
+      financeiroPin: '0001',
+      units: defaultUnits(),
+      announcements: [],
+      financial: { entries: [], fundoObra: { movements: [] }, contasFixas: [] }
+    };
+  }
+
+  async function loadData(){
+    try{
+      const res = await fetch('/api/data');
+      if(!res.ok) throw new Error('fetch failed');
+      const json = await res.json();
+      data = json || defaultData();
+    }catch(e){
+      data = defaultData();
+    }
+    if(!data.financial) data.financial = { entries: [], fundoObra: { movements: [] }, contasFixas: [] };
+    if(!data.financial.fundoObra) data.financial.fundoObra = { movements: [] };
+    if(!data.financial.contasFixas) data.financial.contasFixas = [];
+    if(data.adminPin && !data.sindicoPin){ data.sindicoPin = data.adminPin; }
+    if(!data.sindicoPin) data.sindicoPin = '0000';
+    if(!data.financeiroPin) data.financeiroPin = '0001';
+    (data.units||[]).forEach(u=>{
+      if(u.proprietario === undefined) u.proprietario = '';
+      if(u.proprietarioTelefone === undefined) u.proprietarioTelefone = '';
+      if(u.inquilino === undefined) u.inquilino = '';
+      if(u.inquilinoTelefone === undefined) u.inquilinoTelefone = '';
+      if(!u.history) u.history = [];
+      if(!u.issues) u.issues = [];
+      delete u.pin;
+      delete u.financialAccess;
+    });
+    render();
+  }
+
+  async function saveData(){
+    try{
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if(!res.ok) throw new Error('save failed');
+    }catch(e){
+      showToast('Não foi possível salvar. Tente novamente.');
+    }
+  }
+
+  let toastTimer = null;
+  function showToast(msg){
+    ui.toastMsg = msg;
+    render();
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{ ui.toastMsg = null; render(); }, 2600);
+  }
+
+  function fmtMoney(v){
+    const n = Number(v)||0;
+    return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  }
+  function fmtMoneyShort(v){
+    const n = Number(v)||0;
+    if(n >= 1000) return 'R$'+(n/1000).toFixed(1).replace('.0','')+'k';
+    return 'R$'+Math.round(n);
+  }
+  function monthShort(ym){
+    const [y,m] = ym.split('-').map(Number);
+    return new Date(Date.UTC(y, m-1, 1)).toLocaleDateString('pt-BR', {month:'short', timeZone:'UTC'}).replace('.','');
+  }
+  function monthLabel(ym){
+    const [y,m] = ym.split('-').map(Number);
+    const label = new Date(Date.UTC(y, m-1, 1)).toLocaleDateString('pt-BR', {month:'long', year:'numeric', timeZone:'UTC'});
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+  function fmtDate(d){
+    if(!d) return '';
+    const [y,m,day] = d.split('-');
+    return day+'/'+m+'/'+y;
+  }
+  function todayISO(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function isSindico(){ return session.role === 'sindico'; }
+  function isFinanceiro(){ return session.role === 'financeiro'; }
+  function isStaff(){ return isSindico() || isFinanceiro(); }
+  function currentAuthorId(){
+    return isSindico() ? '__sindico__' : '__financeiro__';
+  }
+  function hasFinancialAccess(){
+    return isStaff();
+  }
+
+  // ---------------- RENDER ----------------
+  function render(){
+    const app = document.getElementById('app');
+    if(!data){ app.innerHTML = ''; return; }
+    if(!session.role){
+      app.innerHTML = renderLogin();
+    } else {
+      app.innerHTML = renderDashboard();
+    }
+    attachEvents();
+  }
+
+  function renderLogin(){
+    let pinPanel = '';
+    if(ui.pinTarget){
+      const labels = { __sindico__:'Síndico', __financeiro__:'Financeiro' };
+      const label = labels[ui.pinTarget] || '';
+      pinPanel = `
+        <div class="pin-panel">
+          <div class="pin-panel-title">Senha — ${label}</div>
+          <div class="pin-row">
+            <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="••••" value="${ui.pinValue}" autofocus>
+            <button data-action="pin-submit">Entrar</button>
+          </div>
+          ${ui.pinError ? `<div class="pin-error">${ui.pinError}</div>` : ''}
+          <button class="pin-cancel" data-action="pin-cancel">cancelar</button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="login-wrap">
+        <div class="board-frame">
+          <div class="board-screw-bl"></div><div class="board-screw-br"></div>
+          <div class="board-header">
+            <div class="board-eyebrow">Portaria digital</div>
+            <div class="board-title display">${data.buildingName}</div>
+            <div class="board-sub">Acesso restrito à administração</div>
+          </div>
+          <div class="tile-grid role-grid">
+            <button class="tile admin-tile" data-action="select-role" data-role="__sindico__">
+              <div class="tile-num">Síndico</div>
+              <div class="tile-label">Acesso total</div>
+            </button>
+            <button class="tile admin-tile" data-action="select-role" data-role="__financeiro__">
+              <div class="tile-num">Financeiro</div>
+              <div class="tile-label">Mural + Financeiro</div>
+            </button>
+          </div>
+          ${pinPanel}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDashboard(){
+    const badge = isSindico() ? 'SIN' : 'FIN';
+    const name = isSindico() ? 'Síndico' : 'Financeiro';
+    const role = isSindico() ? 'Acesso total' : 'Mural + Financeiro';
+
+    const canSeeFinance = hasFinancialAccess();
+    const canSeeSettings = isSindico();
+
+    let tabsHtml = `<button class="tab-btn ${ui.tab==='mural'?'active':''}" data-action="tab" data-tab="mural">Mural de avisos</button>`;
+    if(canSeeFinance){
+      tabsHtml += `<button class="tab-btn ${ui.tab==='financeiro'?'active':''}" data-action="tab" data-tab="financeiro">Financeiro</button>`;
+      tabsHtml += `<button class="tab-btn ${ui.tab==='dashboard'?'active':''}" data-action="tab" data-tab="dashboard">Dashboard</button>`;
+    }
+    if(isSindico()){
+      tabsHtml += `<button class="tab-btn ${ui.tab==='unidades'?'active':''}" data-action="tab" data-tab="unidades">Unidades</button>`;
+    }
+    if(canSeeSettings){
+      tabsHtml += `<button class="tab-btn ${ui.tab==='ajustes'?'active':''}" data-action="tab" data-tab="ajustes">Ajustes</button>`;
+    }
+
+    let body = '';
+    if(ui.tab === 'mural') body = renderMural();
+    else if(ui.tab === 'financeiro') body = canSeeFinance ? renderFinanceiro() : renderLocked();
+    else if(ui.tab === 'dashboard') body = canSeeFinance ? renderFinDashboard() : renderLocked();
+    else if(ui.tab === 'unidades') body = isSindico() ? renderUnidades() : renderLocked();
+    else if(ui.tab === 'ajustes') body = canSeeSettings ? renderAjustes() : renderLocked();
+
+    return `
+      <div class="app-shell">
+        <div class="topbar">
+          <div class="topbar-id">
+            <div class="topbar-badge mono">${badge}</div>
+            <div>
+              <div class="topbar-name">${name}</div>
+              <div class="topbar-role">${role}</div>
+            </div>
+          </div>
+          <button class="logout-btn" data-action="logout">Sair</button>
+        </div>
+        <div class="tabs">${tabsHtml}</div>
+        <div class="content">${body}</div>
+      </div>
+      ${ui.modal ? renderModal() : ''}
+      ${ui.toastMsg ? `<div class="toast">${ui.toastMsg}</div>` : ''}
+    `;
+  }
+
+  function renderLocked(){
+    return `<div class="locked"><div class="locked-icon">🔒</div>Esta área é restrita.</div>`;
+  }
+
+  const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Financeiro' };
+  function renderAvisoCard(a){
+    const t = TYPES[a.type] || TYPES.geral;
+    return `
+      <div class="card">
+        <div class="aviso-head">
+          <span class="type-badge" style="background:${t.color}">${t.label}</span>
+          <span class="aviso-meta">${AUTHOR_LABELS[a.author] || ('Apto ' + a.author)} · ${fmtDate(a.date)}</span>
+        </div>
+        <div class="aviso-title">${escapeHtml(a.title)}</div>
+        ${a.type==='mudanca' && a.moveDate ? `<div class="fin-details" style="margin-bottom:8px;"><span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">${fmtDate(a.moveDate)} · ${formatSlot(a.moveSlot)}</span></div>` : ''}
+        <div class="aviso-msg">${escapeHtml(a.message)}</div>
+        <div class="card-actions-row">
+          <button class="aviso-del" data-action="del-aviso" data-id="${a.id}">remover</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderMural(){
+    const chips = ['todos', ...Object.keys(TYPES)].map(t => `
+      <button class="chip ${ui.filterType===t?'active':''}" data-action="filter" data-type="${t}">
+        ${t==='todos' ? 'Todos' : TYPES[t].label}
+      </button>
+    `).join('');
+
+    let list = [...data.announcements].sort((a,b)=> (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+    if(ui.filterType !== 'todos') list = list.filter(a => a.type === ui.filterType);
+
+    const cards = list.length ? list.map(renderAvisoCard).join('') : `<div class="empty">Nenhum aviso ainda. Crie o primeiro comunicado do prédio.</div>`;
+
+    return `
+      <div class="section-head">
+        <div class="section-title display">Mural de avisos</div>
+        <button class="primary-btn" data-action="open-aviso-modal">+ Novo aviso</button>
+      </div>
+      <div class="chip-row">${chips}</div>
+      ${cards}
+    `;
+  }
+
+  const PAGTO_LABELS = { pix:'Pix', boleto:'Boleto', dinheiro:'Dinheiro', transferencia:'Transferência', cartao:'Cartão' };
+  const FIN_TYPES = {
+    receita: { label:'Receita', color:'var(--teal)', sign:'+', cls:'amt-pos' },
+    despesa: { label:'Despesa', color:'var(--brick)', sign:'−', cls:'amt-neg' },
+    corte:   { label:'Corte de gastos', color:'var(--steel)', sign:'↓', cls:'amt-corte' }
+  };
+
+  function financeChartMonths(){
+    const map = {};
+    data.financial.entries.forEach(e=>{
+      const m = e.date.slice(0,7);
+      if(!map[m]) map[m] = {receita:0, despesa:0, corte:0};
+      map[m][e.type] = (map[m][e.type]||0) + Number(e.amount);
+    });
+    return Object.keys(map).sort().slice(-6).map(m=>({month:m, ...map[m]}));
+  }
+
+  function renderFinChart(){
+    const months = financeChartMonths();
+    if(months.length === 0) return '';
+    const w = 640, h = 170, padL=46, padB=26, padT=10, padR=10;
+    const chartW = w - padL - padR;
+    const chartH = h - padT - padB;
+    const maxVal = Math.max(1, ...months.flatMap(m=>[m.receita, m.despesa]));
+    const groupW = chartW / months.length;
+    const barW = Math.min(20, groupW/3.4);
+
+    const gridLines = [0.5,1].map(f=>{
+      const y = padT + chartH - chartH*f;
+      return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--line)" stroke-width="1"/>
+        <text x="${padL-8}" y="${y+3}" font-size="9" fill="var(--text-dim)" text-anchor="end">${fmtMoneyShort(maxVal*f)}</text>`;
+    }).join('');
+
+    const bars = months.map((m,i)=>{
+      const cx = padL + groupW*i + groupW/2;
+      const rH = (m.receita/maxVal)*chartH;
+      const dH = (m.despesa/maxVal)*chartH;
+      const rY = padT + chartH - rH;
+      const dY = padT + chartH - dH;
+      const rX = cx - barW - 3;
+      const dX = cx + 3;
+      const corteY = m.corte>0 ? padT + chartH - Math.min(m.corte/maxVal,1)*chartH : null;
+      return `
+        <rect x="${rX}" y="${rY}" width="${barW}" height="${Math.max(rH,0)}" rx="3" fill="var(--teal)"/>
+        <rect x="${dX}" y="${dY}" width="${barW}" height="${Math.max(dH,0)}" rx="3" fill="var(--brick)"/>
+        ${m.corte>0 ? `<circle cx="${cx}" cy="${corteY}" r="3.5" fill="var(--steel)"/>` : ''}
+        <text x="${cx}" y="${h-padB+15}" font-size="10" fill="var(--text-dim)" text-anchor="middle">${monthShort(m.month)}</text>
+      `;
+    }).join('');
+
+    return `
+      <details class="collapse-block">
+        <summary>Ver evolução mensal</summary>
+        <div style="margin-top:4px;">
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--text-dim);margin-bottom:6px;">
+            <span><span class="legend-dot" style="background:var(--teal);"></span>Receitas</span>
+            <span><span class="legend-dot" style="background:var(--brick);"></span>Despesas</span>
+            <span><span class="legend-dot" style="background:var(--steel);border-radius:50%;"></span>Cortes</span>
+          </div>
+          <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;">
+            ${gridLines}
+            ${bars}
+          </svg>
+        </div>
+      </details>
+    `;
+  }
+
+  function fixaChartMonths(){
+    const map = {};
+    data.financial.entries.filter(e=>e.contaFixaId).forEach(e=>{
+      const m = e.mesReferencia || e.date.slice(0,7);
+      if(!map[m]) map[m] = {pago:0, pendente:0};
+      if(e.pago) map[m].pago += Number(e.amount);
+      else map[m].pendente += Number(e.amount);
+    });
+    return Object.keys(map).sort().slice(-6).map(m=>({month:m, ...map[m]}));
+  }
+
+  function renderContaFixaChart(){
+    const months = fixaChartMonths();
+    if(months.length === 0) return '';
+    const w = 640, h = 170, padL=46, padB=26, padT=10, padR=10;
+    const chartW = w - padL - padR;
+    const chartH = h - padT - padB;
+    const maxVal = Math.max(1, ...months.map(m=>m.pago+m.pendente));
+    const groupW = chartW / months.length;
+    const barW = Math.min(28, groupW/2);
+
+    const gridLines = [0.5,1].map(f=>{
+      const y = padT + chartH - chartH*f;
+      return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--line)" stroke-width="1"/>
+        <text x="${padL-8}" y="${y+3}" font-size="9" fill="var(--text-dim)" text-anchor="end">${fmtMoneyShort(maxVal*f)}</text>`;
+    }).join('');
+
+    const bars = months.map((m,i)=>{
+      const cx = padL + groupW*i + groupW/2;
+      const pagoH = (m.pago/maxVal)*chartH;
+      const pendH = (m.pendente/maxVal)*chartH;
+      const pendY = padT + chartH - pendH;
+      const pagoY = pendY - pagoH;
+      return `
+        <rect x="${cx-barW/2}" y="${pendY}" width="${barW}" height="${Math.max(pendH,0)}" rx="3" fill="var(--brick)"/>
+        <rect x="${cx-barW/2}" y="${pagoY}" width="${barW}" height="${Math.max(pagoH,0)}" rx="3" fill="var(--teal)"/>
+        <text x="${cx}" y="${h-padB+15}" font-size="10" fill="var(--text-dim)" text-anchor="middle">${monthShort(m.month)}</text>
+      `;
+    }).join('');
+
+    return `
+      <details class="collapse-block">
+        <summary>Ver contas fixas por mês</summary>
+        <div style="margin-top:4px;">
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--text-dim);margin-bottom:6px;">
+            <span><span class="legend-dot" style="background:var(--teal);"></span>Pago</span>
+            <span><span class="legend-dot" style="background:var(--brick);"></span>Em aberto/atraso</span>
+          </div>
+          <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;">
+            ${gridLines}
+            ${bars}
+          </svg>
+        </div>
+      </details>
+    `;
+  }
+
+  function currentMonthStr(){
+    return todayISO().slice(0,7);
+  }
+  function contaFixaEntryFor(templateId, mes){
+    return data.financial.entries.find(e=>e.contaFixaId===templateId && e.mesReferencia===mes);
+  }
+  function contaFixaStatus(template, entry){
+    const todayDay = new Date().getDate();
+    const overdue = template.diaVencimento && todayDay > template.diaVencimento;
+    if(!entry) return overdue ? 'atraso-sem-lancamento' : 'nao-lancado';
+    if(entry.pago) return 'pago';
+    return overdue ? 'atraso' : 'aberto';
+  }
+  const CF_STATUS = {
+    'pago':                { label:'Pago', color:'var(--teal)' },
+    'aberto':               { label:'Em aberto', color:'var(--steel)' },
+    'atraso':               { label:'Em atraso', color:'var(--brick)' },
+    'nao-lancado':          { label:'Não lançado', color:'var(--neutral)' },
+    'atraso-sem-lancamento':{ label:'Em atraso — não lançado', color:'var(--brick)' }
+  };
+
+  function fundoBalance(movements){
+    const sorted = [...movements].sort((a,b)=>(a.date+a.createdAt).localeCompare(b.date+b.createdAt));
+    let running = 0;
+    sorted.forEach(m=>{
+      if(m.type === 'aporte') running += Number(m.amount);
+      else if(m.type === 'ajuste') running = Number(m.amount);
+    });
+    return running;
+  }
+
+  function renderFundoObra(){
+    const movements = data.financial.fundoObra.movements;
+    const balance = fundoBalance(movements);
+    const sorted = [...movements].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+
+    const rows = sorted.length ? sorted.map(m => `
+      <div class="unit-row" style="font-size:12px;">
+        <span class="fin-tag" style="color:${m.type==='aporte'?'var(--teal)':'var(--steel)'};border-color:${m.type==='aporte'?'rgba(79,139,127,0.4)':'rgba(92,127,166,0.4)'};">${m.type==='aporte'?'Aporte':'Atualização'}</span>
+        <span class="mono" style="color:var(--text-dim);">${fmtDate(m.date)}</span>
+        <span style="flex:1;">${escapeHtml(m.note||'')}</span>
+        <span class="mono" style="font-weight:600;">${m.type==='aporte' ? '+'+fmtMoney(m.amount) : fmtMoney(m.amount)}</span>
+        ${isSindico() ? `<button class="row-del" data-action="del-fundo-mov" data-id="${m.id}">remover</button>` : ''}
+      </div>
+    `).join('') : `<div style="color:var(--text-dim);font-size:12px;padding:8px 0;">Nenhuma movimentação registrada.</div>`;
+
+    return `
+      <div class="card fundo-compact">
+        <div class="fundo-compact-row">
+          <div>
+            <div class="stat-label">Fundo de obra</div>
+            <div class="mono fundo-balance">${fmtMoney(balance)}</div>
+          </div>
+        </div>
+        ${movements.length ? `<details class="collapse-block" style="margin-top:6px;"><summary>Histórico (${movements.length})</summary><div style="margin-top:4px;">${rows}</div></details>` : ''}
+      </div>
+    `;
+  }
+
+  function renderContasFixas(){
+    const mes = currentMonthStr();
+    const templates = data.financial.contasFixas;
+    const overdueCount = templates.filter(t=>{
+      const st = contaFixaStatus(t, contaFixaEntryFor(t.id, mes));
+      return st === 'atraso' || st === 'atraso-sem-lancamento';
+    }).length;
+    const rows = templates.length ? templates.map(t => {
+      const entry = contaFixaEntryFor(t.id, mes);
+      const status = contaFixaStatus(t, entry);
+      const st = CF_STATUS[status];
+      return `
+        <div class="cf-row">
+          <div class="cf-row-main">
+            <div>
+              <div style="font-weight:600;font-size:13px;">${escapeHtml(t.nome)}</div>
+              <div style="font-size:11px;color:var(--text-dim);">${t.diaVencimento ? 'Vence dia '+t.diaVencimento : 'Sem dia fixo'}</div>
+            </div>
+            <span class="fin-tag" style="color:${st.color};border-color:${st.color};">${st.label}</span>
+          </div>
+          <div class="cf-row-actions">
+            <input type="number" class="cf-valor-input mono" data-action="cf-set-valor" data-id="${t.id}" step="0.01" placeholder="Valor deste mês" value="${entry ? entry.amount : ''}" ${isSindico()?'':'readonly'}>
+            ${isSindico() ? `
+              ${entry ? `<button class="ghost-btn small-btn" data-action="cf-toggle-pago" data-id="${t.id}">${entry.pago?'Reabrir':'Marcar pago'}</button>` : ''}
+              <button class="row-del" data-action="cf-del-template" data-id="${t.id}">remover conta</button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join('') : `<div style="color:var(--text-dim);font-size:12px;padding:8px 0;">Nenhuma conta fixa cadastrada.</div>`;
+
+    return `
+      <div class="card" style="margin-bottom:12px;">
+        <div class="stat-label" style="margin-bottom:6px;">Contas fixas</div>
+        ${overdueCount>0 ? `<div class="cf-warning">⚠ ${overdueCount} conta${overdueCount>1?'s':''} fixa${overdueCount>1?'s':''} em atraso este mês.</div>` : ''}
+        ${rows}
+      </div>
+    `;
+  }
+
+  function renderFinanceiro(){
+    const allEntries = [...data.financial.entries].sort((a,b)=> b.date.localeCompare(a.date));
+    const months = [...new Set(allEntries.map(e=>e.date.slice(0,7)))].sort().reverse();
+    let entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
+    if(ui.finShowOnlyFixas) entries = entries.filter(e=>e.contaFixaId);
+
+    const monthOptions = `<option value="todos">Todos os meses</option>` +
+      months.map(m => `<option value="${m}" ${ui.finMonthFilter===m?'selected':''}>${monthLabel(m)}</option>`).join('');
+
+    const cards = entries.length ? entries.map(e => {
+      const ft = FIN_TYPES[e.type] || FIN_TYPES.despesa;
+      return `
+      <div class="card fin-card">
+        <div class="aviso-head">
+          <span class="type-badge" style="background:${ft.color}">${ft.label}</span>
+          <span class="aviso-meta">${fmtDate(e.date)}${e.unit ? ' · Apto '+e.unit : ''}</span>
+        </div>
+        <div class="fin-top-row">
+          <div class="aviso-title" style="margin:2px 0;">${escapeHtml(e.conta)}${e.contaFixaId ? ' <span class="fin-tag" style="margin-left:4px;">conta fixa</span>' : ''}</div>
+          <div class="${ft.cls}" style="font-size:15px;font-weight:600;">${ft.sign} ${fmtMoney(e.amount)}</div>
+        </div>
+        <div class="fin-details">
+          ${e.formaPagamento ? `<span class="fin-tag">${PAGTO_LABELS[e.formaPagamento]||e.formaPagamento}</span>` : ''}
+          ${e.comprovante ? `<a class="fin-tag fin-link" href="${escapeAttr(e.comprovante)}" target="_blank" rel="noopener">comprovante ↗</a>` : ''}
+        </div>
+        ${e.obs ? `<div class="aviso-msg" style="margin-top:6px;">${escapeHtml(e.obs)}</div>` : ''}
+        ${isSindico() ? `<button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button>` : ''}
+      </div>
+    `;
+    }).join('') : `<div class="empty">Nenhum lançamento ${ui.finShowOnlyFixas||ui.finMonthFilter!=='todos'?'com esse filtro':'ainda'}.</div>`;
+
+    return `
+      <div class="section-head">
+        <div class="section-title display">Financeiro</div>
+      </div>
+      <div class="fin-toolbar">
+        ${isSindico() ? `<button class="primary-btn small-btn" data-action="open-fin-modal">+ Lançamento</button>` : ''}
+        ${isSindico() ? `<button class="ghost-btn small-btn" data-action="open-fundo-ajuste">Atualizar fundo</button>` : ''}
+        ${isSindico() ? `<button class="ghost-btn small-btn" data-action="open-contafixa-nova">+ Nova conta fixa</button>` : ''}
+        <button class="ghost-btn small-btn" data-action="export-csv">Exportar CSV</button>
+      </div>
+      ${renderFundoObra()}
+      ${renderContasFixas()}
+      <select id="fin-month-filter" class="fin-month-select">${monthOptions}</select>
+      <div class="chip-row">
+        <button class="chip ${!ui.finShowOnlyFixas?'active':''}" data-action="fin-filter-all">Todos os lançamentos</button>
+        <button class="chip ${ui.finShowOnlyFixas?'active':''}" data-action="fin-filter-fixas">Só contas fixas</button>
+      </div>
+      ${cards}
+    `;
+  }
+
+  function renderFinDashboard(){
+    const allEntries = [...data.financial.entries].sort((a,b)=> b.date.localeCompare(a.date));
+    const months = [...new Set(allEntries.map(e=>e.date.slice(0,7)))].sort().reverse();
+    const entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
+
+    const receitas = entries.filter(e=>e.type==='receita').reduce((s,e)=>s+Number(e.amount),0);
+    const despesas = entries.filter(e=>e.type==='despesa').reduce((s,e)=>s+Number(e.amount),0);
+    const cortes = entries.filter(e=>e.type==='corte').reduce((s,e)=>s+Number(e.amount),0);
+    const saldo = receitas - despesas;
+
+    const monthOptions = `<option value="todos">Todos os meses</option>` +
+      months.map(m => `<option value="${m}" ${ui.finMonthFilter===m?'selected':''}>${monthLabel(m)}</option>`).join('');
+
+    return `
+      <div class="section-title display" style="margin-bottom:14px;">Dashboard</div>
+      <div class="fin-summary-row">
+        <select id="fin-month-filter" class="fin-month-select">${monthOptions}</select>
+        <div class="stat-row compact">
+          <div class="stat-card"><div class="stat-label">Receitas</div><div class="stat-value pos">${fmtMoney(receitas)}</div></div>
+          <div class="stat-card"><div class="stat-label">Despesas</div><div class="stat-value neg">${fmtMoney(despesas)}</div></div>
+          <div class="stat-card"><div class="stat-label">Saldo</div><div class="stat-value ${saldo>=0?'pos':'neg'}">${fmtMoney(saldo)}</div></div>
+          <div class="stat-card"><div class="stat-label">Cortes</div><div class="stat-value" style="color:var(--steel);">${fmtMoney(cortes)}</div></div>
+        </div>
+      </div>
+      ${renderFinChart()}
+      ${renderContaFixaChart()}
+    `;
+  }
+
+  function renderAjustes(){
+    return `
+      <div class="section-title display" style="margin-bottom:18px;">Ajustes</div>
+
+      <div class="settings-block">
+        <div class="settings-block-title">Prédio</div>
+        <div class="field">
+          <label>Nome do edifício</label>
+          <input type="text" id="building-name-input" value="${escapeAttr(data.buildingName)}">
+        </div>
+        <button class="ghost-btn" data-action="save-building-name">Salvar nome</button>
+      </div>
+
+      <div class="settings-block">
+        <div class="settings-block-title">Senha do síndico</div>
+        <div class="field" style="max-width:220px;">
+          <input type="text" id="sindico-pin-input" value="${escapeAttr(data.sindicoPin)}" maxlength="6">
+        </div>
+        <button class="ghost-btn" data-action="save-sindico-pin">Salvar senha</button>
+      </div>
+
+      <div class="settings-block">
+        <div class="settings-block-title">Senha do financeiro</div>
+        <div class="field" style="max-width:220px;">
+          <input type="text" id="financeiro-pin-input" value="${escapeAttr(data.financeiroPin)}" maxlength="6">
+        </div>
+        <button class="ghost-btn" data-action="save-financeiro-pin">Salvar senha</button>
+      </div>
+    `;
+  }
+
+  function renderUnitRow(u){
+    const openIssues = u.issues.filter(i=>i.status!=='resolvido').length;
+    const menuOpen = ui.unitMenuOpen === u.id;
+    return `
+      <div class="unit-card">
+        <input type="text" class="u-id-input mono" data-action="edit-unit-id" data-id="${u.id}" value="${u.id}" maxlength="6">
+        <div class="unit-card-info">
+          <div class="unit-card-owner">${u.proprietario ? escapeHtml(u.proprietario) : '<span style="color:var(--text-dim);">Proprietário não informado</span>'}</div>
+          ${u.proprietarioTelefone && !u.inquilino ? `<a class="unit-card-phone" href="tel:${escapeAttr(u.proprietarioTelefone)}">${escapeHtml(u.proprietarioTelefone)}</a>` : ''}
+          ${u.inquilino ? `<div class="unit-card-tenant">Inquilino: ${escapeHtml(u.inquilino)}</div>` : ''}
+          ${u.inquilino && u.inquilinoTelefone ? `<a class="unit-card-phone" href="tel:${escapeAttr(u.inquilinoTelefone)}">${escapeHtml(u.inquilinoTelefone)}</a>` : ''}
+        </div>
+        ${openIssues>0 ? `<span class="fin-tag" style="color:var(--brick);border-color:rgba(166,80,59,0.4);">${openIssues} em aberto</span>` : ''}
+        <div class="unit-menu-wrap">
+          <button class="kebab-btn" data-action="toggle-unit-menu" data-id="${u.id}">⋮</button>
+          ${menuOpen ? `
+            <div class="unit-menu">
+              <button data-action="open-unit-owner" data-id="${u.id}">Proprietário</button>
+              <button data-action="open-unit-issues" data-id="${u.id}">Problemas / Histórico</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderUnidades(){
+    const rows = data.units.map(renderUnitRow).join('');
+    return `
+      <div class="section-title display" style="margin-bottom:14px;">Unidades</div>
+      ${rows}
+    `;
+  }
+
+  function renderUnitOwnerModal(unitId){
+    const u = data.units.find(x=>x.id===unitId);
+    if(!u) return '<div class="modal-backdrop" data-action="backdrop"><div class="modal">Unidade não encontrada.</div></div>';
+    return `
+      <div class="modal-backdrop" data-action="backdrop">
+        <div class="modal">
+          <div class="modal-title">Apto ${u.id} — Proprietário</div>
+          <div class="field"><label>Proprietário</label><input type="text" id="unit-owner-input" value="${escapeAttr(u.proprietario)}" placeholder="Nome do proprietário"></div>
+          <div class="field"><label>Telefone do proprietário</label><input type="tel" id="unit-owner-phone-input" value="${escapeAttr(u.proprietarioTelefone)}" placeholder="(00) 00000-0000"></div>
+          <div class="field"><label>Inquilino (se alugado)</label><input type="text" id="unit-tenant-input" value="${escapeAttr(u.inquilino)}" placeholder="Deixe em branco se ocupado pelo proprietário"></div>
+          <div class="field"><label>Telefone do inquilino</label><input type="tel" id="unit-tenant-phone-input" value="${escapeAttr(u.inquilinoTelefone)}" placeholder="(00) 00000-0000"></div>
+          <div class="modal-actions">
+            <button class="ghost-btn" data-action="close-modal">Fechar</button>
+            <button class="primary-btn" data-action="save-unit-detail" data-id="${u.id}">Salvar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderUnitIssuesModal(unitId){
+    const u = data.units.find(x=>x.id===unitId);
+    if(!u) return '<div class="modal-backdrop" data-action="backdrop"><div class="modal">Unidade não encontrada.</div></div>';
+
+    const historySorted = [...u.history].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+    const historyRows = historySorted.length ? historySorted.map(h => `
+      <div class="unit-row" style="font-size:12px;">
+        <span class="mono" style="color:var(--text-dim);">${fmtDate(h.date)}</span>
+        <span style="flex:1;">${escapeHtml(h.note)}</span>
+        <button class="row-del" data-action="del-history" data-uid="${u.id}" data-id="${h.id}">remover</button>
+      </div>
+    `).join('') : `<div style="color:var(--text-dim);font-size:12px;padding:6px 0;">Nenhum registro ainda.</div>`;
+
+    const issuesSorted = [...u.issues].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+    const issueRows = issuesSorted.length ? issuesSorted.map(i => `
+      <div class="issue-row">
+        <div class="issue-row-top">
+          <span class="fin-tag" style="color:${i.status==='resolvido'?'var(--teal)':'var(--brick)'};border-color:${i.status==='resolvido'?'rgba(79,139,127,0.4)':'rgba(166,80,59,0.4)'};">${i.status==='resolvido'?'Resolvido':'Em aberto'}</span>
+          <span class="mono" style="color:var(--text-dim);font-size:11px;">${fmtDate(i.date)}</span>
+        </div>
+        <div style="font-weight:600;font-size:13px;margin:4px 0 2px;">${escapeHtml(i.title)}</div>
+        ${i.description ? `<div style="font-size:12.5px;color:#cfccc0;line-height:1.5;">${escapeHtml(i.description)}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="ghost-btn small-btn" data-action="toggle-issue" data-uid="${u.id}" data-id="${i.id}">${i.status==='resolvido'?'Reabrir':'Marcar resolvido'}</button>
+          <button class="row-del" data-action="del-issue" data-uid="${u.id}" data-id="${i.id}">remover</button>
+        </div>
+      </div>
+    `).join('') : `<div style="color:var(--text-dim);font-size:12px;padding:6px 0;">Nenhum problema registrado.</div>`;
+
+    return `
+      <div class="modal-backdrop" data-action="backdrop">
+        <div class="modal" style="max-width:520px;">
+          <div class="modal-title">Apto ${u.id} — Problemas / Histórico</div>
+
+          <details class="collapse-block" open>
+            <summary>Histórico de ocupação (${u.history.length})</summary>
+            <div style="margin:8px 0;">${historyRows}</div>
+            <div class="field"><textarea id="new-history-note" placeholder="Ex: Novo inquilino — Maria, contrato até 06/2027"></textarea></div>
+            <div class="field"><label>Data</label><input type="date" id="new-history-date" value="${todayISO()}" style="max-width:160px;"></div>
+            <button class="ghost-btn small-btn" data-action="add-history" data-id="${u.id}">+ Adicionar ao histórico</button>
+          </details>
+
+          <details class="collapse-block" style="margin-top:16px;" open>
+            <summary>Problemas / observações (${u.issues.length})</summary>
+            <div style="margin:8px 0;">${issueRows}</div>
+            <div class="field"><input type="text" id="new-issue-title" placeholder="Título — ex: Vazamento no banheiro"></div>
+            <div class="field"><textarea id="new-issue-desc" placeholder="Detalhes (opcional)"></textarea></div>
+            <div class="field"><label>Data</label><input type="date" id="new-issue-date" value="${todayISO()}" style="max-width:160px;"></div>
+            <button class="primary-btn small-btn" data-action="add-issue" data-id="${u.id}">+ Registrar problema</button>
+          </details>
+
+          <div class="modal-actions">
+            <button class="ghost-btn" data-action="close-modal">Fechar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderModal(){
+    if(ui.modal === 'unit-owner'){
+      return renderUnitOwnerModal(ui.detailUnitId);
+    }
+    if(ui.modal === 'unit-issues'){
+      return renderUnitIssuesModal(ui.detailUnitId);
+    }
+    if(ui.modal === 'aviso'){
+      const opts = Object.keys(TYPES).map(k => `<option value="${k}">${TYPES[k].label}</option>`).join('');
+      return `
+        <div class="modal-backdrop" data-action="backdrop">
+          <div class="modal">
+            <div class="modal-title">Novo aviso</div>
+            <div class="field"><label>Tipo</label><select id="aviso-type">${opts}</select></div>
+            <div class="field" id="mudanca-date-field">
+              <label>Data da mudança</label>
+              <input type="date" id="aviso-move-date">
+              <div style="font-size:11px;color:var(--text-dim);margin-top:5px;">Seg a sex, 08:00–17:00 · sáb, 08:00–12:00</div>
+            </div>
+            <div class="field" id="mudanca-slot-field">
+              <label>Horário</label>
+              <select id="aviso-move-slot"><option value="">Selecione a data primeiro</option></select>
+              <div id="aviso-move-error" class="pin-error" style="display:none;"></div>
+            </div>
+            <div class="field"><label>Título</label><input type="text" id="aviso-title" placeholder="Ex: Mudança apto 302"></div>
+            <div class="field"><label>Mensagem</label><textarea id="aviso-msg" placeholder="Detalhes do aviso..."></textarea></div>
+            <div class="modal-actions">
+              <button class="ghost-btn" data-action="close-modal">Cancelar</button>
+              <button class="primary-btn" data-action="save-aviso">Publicar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    if(ui.modal === 'financeiro'){
+      return `
+        <div class="modal-backdrop" data-action="backdrop">
+          <div class="modal">
+            <div class="modal-title">Novo lançamento</div>
+            <div class="field"><label>Tipo</label>
+              <select id="fin-type"><option value="receita">Receita</option><option value="despesa">Despesa</option><option value="corte">Corte de gastos</option></select>
+            </div>
+            <div class="field"><label>Conta</label><input type="text" id="fin-conta" placeholder="Ex: Taxa condominial, Reparo elevador, Água..."></div>
+            <div class="field"><label>Valor (R$)</label><input type="number" id="fin-amount" step="0.01" placeholder="0,00"></div>
+            <div class="field"><label>Data</label><input type="date" id="fin-date" value="${todayISO()}"></div>
+            <div class="field"><label>Forma de pagamento</label>
+              <select id="fin-pagto">
+                <option value="">—</option>
+                <option value="pix">Pix</option>
+                <option value="boleto">Boleto</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="transferencia">Transferência</option>
+                <option value="cartao">Cartão</option>
+              </select>
+            </div>
+            <div class="field"><label>Comprovante (link)</label><input type="text" id="fin-comprovante" placeholder="Cole aqui o link da foto/PDF do comprovante"></div>
+            <div class="field"><label>Unidade (opcional)</label>
+              <select id="fin-unit"><option value="">—</option>${data.units.map(u=>`<option value="${u.id}">${u.id}</option>`).join('')}</select>
+            </div>
+            <div class="field"><label>Observações</label><textarea id="fin-obs" placeholder="Detalhes, número da nota, contato do prestador..."></textarea></div>
+            <div class="modal-actions">
+              <button class="ghost-btn" data-action="close-modal">Cancelar</button>
+              <button class="primary-btn" data-action="save-fin">Salvar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    if(ui.modal === 'fundo-aporte'){
+      return `
+        <div class="modal-backdrop" data-action="backdrop">
+          <div class="modal">
+            <div class="modal-title">Novo aporte — Fundo de obra</div>
+            <div class="field"><label>Valor (R$)</label><input type="number" id="fundo-amount" step="0.01" placeholder="0,00"></div>
+            <div class="field"><label>Data</label><input type="date" id="fundo-date" value="${todayISO()}"></div>
+            <div class="field"><label>Observação (opcional)</label><input type="text" id="fundo-note" placeholder="Ex: Repasse da taxa extra de julho"></div>
+            <div class="modal-actions">
+              <button class="ghost-btn" data-action="close-modal">Cancelar</button>
+              <button class="primary-btn" data-action="save-fundo-aporte">Adicionar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    if(ui.modal === 'fundo-ajuste'){
+      const current = fundoBalance(data.financial.fundoObra.movements);
+      return `
+        <div class="modal-backdrop" data-action="backdrop">
+          <div class="modal">
+            <div class="modal-title">Atualizar valor — Fundo de obra</div>
+            <div class="field"><label>Novo valor total (R$)</label><input type="number" id="fundo-new-total" step="0.01" value="${current.toFixed(2)}"></div>
+            <div class="field"><label>Data</label><input type="date" id="fundo-date" value="${todayISO()}"></div>
+            <div class="field"><label>Observação (opcional)</label><input type="text" id="fundo-note" placeholder="Ex: Conferência de saldo bancário"></div>
+            <div class="modal-actions">
+              <button class="ghost-btn" data-action="close-modal">Cancelar</button>
+              <button class="primary-btn" data-action="save-fundo-ajuste">Salvar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    if(ui.modal === 'contafixa-nova'){
+      return `
+        <div class="modal-backdrop" data-action="backdrop">
+          <div class="modal">
+            <div class="modal-title">Nova conta fixa</div>
+            <div class="field"><label>Nome</label><input type="text" id="cf-nome" placeholder="Ex: Água, Luz, Portaria remota..."></div>
+            <div class="field"><label>Dia de vencimento (opcional)</label><input type="number" id="cf-dia" min="1" max="31" placeholder="Ex: 10"></div>
+            <div class="field"><label>Forma de pagamento padrão (opcional)</label>
+              <select id="cf-pagto">
+                <option value="">—</option>
+                <option value="pix">Pix</option>
+                <option value="boleto">Boleto</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="transferencia">Transferência</option>
+                <option value="cartao">Cartão</option>
+              </select>
+            </div>
+            <div class="field"><label>Observações (opcional)</label><textarea id="cf-obs" placeholder="Detalhes, contrato, contato do fornecedor..."></textarea></div>
+            <div class="modal-actions">
+              <button class="ghost-btn" data-action="close-modal">Cancelar</button>
+              <button class="primary-btn" data-action="save-contafixa-nova">Adicionar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    return '';
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+  function escapeAttr(s){
+    return (s||'').replace(/"/g,'&quot;');
+  }
+
+  // ---------------- EVENTS ----------------
+  function attachEvents(){
+    const app = document.getElementById('app');
+
+    app.querySelectorAll('[data-action="select-role"]').forEach(el=>{
+      el.onclick = () => { ui.pinTarget = el.dataset.role; ui.pinValue=''; ui.pinError=''; render(); };
+    });
+
+    const pinInput = app.querySelector('#pin-input');
+    if(pinInput){
+      pinInput.focus();
+      pinInput.oninput = (e)=>{ ui.pinValue = e.target.value; };
+      pinInput.onkeydown = (e)=>{ if(e.key==='Enter') submitPin(); };
+    }
+    const pinSubmit = app.querySelector('[data-action="pin-submit"]');
+    if(pinSubmit) pinSubmit.onclick = submitPin;
+    const pinCancel = app.querySelector('[data-action="pin-cancel"]');
+    if(pinCancel) pinCancel.onclick = ()=>{ ui.pinTarget=null; ui.pinValue=''; ui.pinError=''; render(); };
+
+    const logoutBtn = app.querySelector('[data-action="logout"]');
+    if(logoutBtn) logoutBtn.onclick = ()=>{ session = {role:null}; ui.tab='mural'; render(); };
+
+    app.querySelectorAll('[data-action="tab"]').forEach(el=>{
+      el.onclick = ()=>{ ui.tab = el.dataset.tab; render(); };
+    });
+    app.querySelectorAll('[data-action="filter"]').forEach(el=>{
+      el.onclick = ()=>{ ui.filterType = el.dataset.type; render(); };
+    });
+
+    if(ui.modal === 'aviso'){
+      const typeSel = app.querySelector('#aviso-type');
+      const dateField = app.querySelector('#mudanca-date-field');
+      const slotField = app.querySelector('#mudanca-slot-field');
+      const dateInput = app.querySelector('#aviso-move-date');
+      const slotSelect = app.querySelector('#aviso-move-slot');
+      const moveError = app.querySelector('#aviso-move-error');
+
+      function refreshSlots(){
+        const dateStr = dateInput.value;
+        moveError.style.display = 'none';
+        moveError.textContent = '';
+        if(!dateStr){
+          slotSelect.innerHTML = '<option value="">Selecione a data primeiro</option>';
+          return;
+        }
+        const dow = dayOfWeekFromISO(dateStr);
+        if(dow === 0){
+          slotSelect.innerHTML = '<option value="">—</option>';
+          moveError.style.display = 'block';
+          moveError.textContent = 'Não há mudanças aos domingos. Escolha de segunda a sábado.';
+          return;
+        }
+        const slots = slotsForDate(dateStr);
+        const taken = takenMoveSlots(dateStr, null);
+        slotSelect.innerHTML = '<option value="">Selecione um horário</option>' + slots.map(s =>
+          `<option value="${s}" ${taken.has(s)?'disabled':''}>${formatSlot(s)}${taken.has(s)?' — indisponível':''}</option>`
+        ).join('');
+      }
+      function toggleMudancaFields(){
+        const isMudanca = typeSel.value === 'mudanca';
+        dateField.style.display = isMudanca ? 'block' : 'none';
+        slotField.style.display = isMudanca ? 'block' : 'none';
+        if(!isMudanca){ dateInput.value=''; slotSelect.innerHTML=''; moveError.style.display='none'; }
+      }
+      typeSel.onchange = toggleMudancaFields;
+      dateInput.onchange = refreshSlots;
+      toggleMudancaFields();
+    }
+
+    const openAviso = app.querySelector('[data-action="open-aviso-modal"]');
+    if(openAviso) openAviso.onclick = ()=>{ ui.modal='aviso'; render(); };
+    const openFin = app.querySelector('[data-action="open-fin-modal"]');
+    if(openFin) openFin.onclick = ()=>{ if(!isSindico()) return; ui.modal='financeiro'; render(); };
+    const finMonthFilter = app.querySelector('#fin-month-filter');
+    if(finMonthFilter) finMonthFilter.onchange = ()=>{ ui.finMonthFilter = finMonthFilter.value; render(); };
+    const openFundoAporte = app.querySelector('[data-action="open-fundo-aporte"]');
+    if(openFundoAporte) openFundoAporte.onclick = ()=>{ if(!isSindico()) return; ui.modal='fundo-aporte'; render(); };
+    const openFundoAjuste = app.querySelector('[data-action="open-fundo-ajuste"]');
+    if(openFundoAjuste) openFundoAjuste.onclick = ()=>{ if(!isSindico()) return; ui.modal='fundo-ajuste'; render(); };
+
+    const finFilterAll = app.querySelector('[data-action="fin-filter-all"]');
+    if(finFilterAll) finFilterAll.onclick = ()=>{ ui.finShowOnlyFixas = false; render(); };
+    const finFilterFixas = app.querySelector('[data-action="fin-filter-fixas"]');
+    if(finFilterFixas) finFilterFixas.onclick = ()=>{ ui.finShowOnlyFixas = true; render(); };
+
+    const openContaFixaNova = app.querySelector('[data-action="open-contafixa-nova"]');
+    if(openContaFixaNova) openContaFixaNova.onclick = ()=>{ if(!isSindico()) return; ui.modal='contafixa-nova'; render(); };
+
+    const saveContaFixaNova = app.querySelector('[data-action="save-contafixa-nova"]');
+    if(saveContaFixaNova) saveContaFixaNova.onclick = async ()=>{
+      if(!isSindico()) return;
+      const nome = app.querySelector('#cf-nome').value.trim();
+      const dia = parseInt(app.querySelector('#cf-dia').value, 10);
+      const formaPagamento = app.querySelector('#cf-pagto').value;
+      const obs = app.querySelector('#cf-obs').value.trim();
+      if(!nome) return;
+      data.financial.contasFixas.push({
+        id:'cf_'+Date.now(), nome,
+        diaVencimento: isNaN(dia) ? null : Math.min(31, Math.max(1,dia)),
+        formaPagamento, obs, createdAt: new Date().toISOString()
+      });
+      ui.modal = null;
+      render();
+      await saveData();
+      showToast('Conta fixa cadastrada.');
+    };
+
+    app.querySelectorAll('[data-action="cf-del-template"]').forEach(el=>{
+      el.onclick = async ()=>{
+        if(!isSindico()) return;
+        data.financial.contasFixas = data.financial.contasFixas.filter(t=>t.id!==el.dataset.id);
+        render();
+        await saveData();
+      };
+    });
+
+    app.querySelectorAll('[data-action="cf-set-valor"]').forEach(el=>{
+      el.onchange = async ()=>{
+        if(!isSindico()) return;
+        const template = data.financial.contasFixas.find(t=>t.id===el.dataset.id);
+        if(!template) return;
+        const amount = parseFloat(el.value);
+        if(isNaN(amount) || amount < 0) return;
+        const mes = currentMonthStr();
+        let entry = contaFixaEntryFor(template.id, mes);
+        if(entry){
+          entry.amount = amount;
+        } else {
+          const dia = template.diaVencimento || 1;
+          const dueDate = mes + '-' + String(dia).padStart(2,'0');
+          data.financial.entries.push({
+            id:'f_'+Date.now(), type:'despesa', conta: template.nome, amount,
+            date: dueDate, formaPagamento: template.formaPagamento||'', comprovante:'',
+            unit: null, obs: template.obs||'',
+            contaFixaId: template.id, mesReferencia: mes, pago:false
+          });
+        }
+        render();
+        await saveData();
+        showToast('Valor atualizado.');
+      };
+    });
+
+    app.querySelectorAll('[data-action="cf-toggle-pago"]').forEach(el=>{
+      el.onclick = async ()=>{
+        if(!isSindico()) return;
+        const template = data.financial.contasFixas.find(t=>t.id===el.dataset.id);
+        if(!template) return;
+        const entry = contaFixaEntryFor(template.id, currentMonthStr());
+        if(!entry) return;
+        entry.pago = !entry.pago;
+        render();
+        await saveData();
+      };
+    });
+    const closeModal = app.querySelector('[data-action="close-modal"]');
+    if(closeModal) closeModal.onclick = ()=>{ ui.modal=null; render(); };
+    const backdrop = app.querySelector('[data-action="backdrop"]');
+    if(backdrop) backdrop.onclick = (e)=>{ if(e.target===backdrop){ ui.modal=null; render(); } };
+
+    const saveAviso = app.querySelector('[data-action="save-aviso"]');
+    if(saveAviso) saveAviso.onclick = async ()=>{
+      const type = app.querySelector('#aviso-type').value;
+      const title = app.querySelector('#aviso-title').value.trim();
+      const msg = app.querySelector('#aviso-msg').value.trim();
+      if(!title || !msg) return;
+
+      let moveDate = null, moveSlot = null;
+      if(type === 'mudanca'){
+        moveDate = app.querySelector('#aviso-move-date').value;
+        moveSlot = app.querySelector('#aviso-move-slot').value;
+        const moveError = app.querySelector('#aviso-move-error');
+        if(!moveDate || dayOfWeekFromISO(moveDate) === 0){
+          moveError.style.display='block';
+          moveError.textContent = 'Escolha uma data válida (segunda a sábado).';
+          return;
+        }
+        if(!moveSlot){
+          moveError.style.display='block';
+          moveError.textContent = 'Escolha um horário disponível.';
+          return;
+        }
+        if(takenMoveSlots(moveDate, null).has(moveSlot)){
+          moveError.style.display='block';
+          moveError.textContent = 'Esse horário acabou de ficar indisponível. Escolha outro.';
+          return;
+        }
+      }
+
+      data.announcements.push({
+        id: 'a_'+Date.now(), type, title, message: msg,
+        author: currentAuthorId(),
+        date: todayISO(), createdAt: new Date().toISOString(),
+        moveDate, moveSlot
+      });
+      ui.modal = null;
+      render();
+      await saveData();
+      showToast('Aviso publicado.');
+    };
+
+    app.querySelectorAll('[data-action="del-aviso"]').forEach(el=>{
+      el.onclick = async ()=>{
+        data.announcements = data.announcements.filter(a=>a.id!==el.dataset.id);
+        render();
+        await saveData();
+      };
+    });
+
+    const saveFin = app.querySelector('[data-action="save-fin"]');
+    if(saveFin) saveFin.onclick = async ()=>{
+      if(!isSindico()) return;
+      const type = app.querySelector('#fin-type').value;
+      const conta = app.querySelector('#fin-conta').value.trim();
+      const amount = parseFloat(app.querySelector('#fin-amount').value);
+      const date = app.querySelector('#fin-date').value || todayISO();
+      const formaPagamento = app.querySelector('#fin-pagto').value;
+      const comprovante = app.querySelector('#fin-comprovante').value.trim();
+      const unit = app.querySelector('#fin-unit').value;
+      const obs = app.querySelector('#fin-obs').value.trim();
+      if(!conta || isNaN(amount)) return;
+      data.financial.entries.push({ id:'f_'+Date.now(), type, conta, amount, date, formaPagamento, comprovante, unit: unit||null, obs });
+      ui.modal = null;
+      render();
+      await saveData();
+      showToast('Lançamento salvo.');
+    };
+
+    const exportCsv = app.querySelector('[data-action="export-csv"]');
+    if(exportCsv) exportCsv.onclick = exportFinanceiroCsv;
+
+    app.querySelectorAll('[data-action="del-fin"]').forEach(el=>{
+      el.onclick = async ()=>{
+        if(!isSindico()) return;
+        data.financial.entries = data.financial.entries.filter(e=>e.id!==el.dataset.id);
+        render();
+        await saveData();
+      };
+    });
+
+    const saveFundoAporte = app.querySelector('[data-action="save-fundo-aporte"]');
+    if(saveFundoAporte) saveFundoAporte.onclick = async ()=>{
+      if(!isSindico()) return;
+      const amount = parseFloat(app.querySelector('#fundo-amount').value);
+      const date = app.querySelector('#fundo-date').value || todayISO();
+      const note = app.querySelector('#fundo-note').value.trim();
+      if(isNaN(amount) || amount <= 0) return;
+      data.financial.fundoObra.movements.push({ id:'fo_'+Date.now(), type:'aporte', amount, date, note, createdAt:new Date().toISOString() });
+      ui.modal = null;
+      render();
+      await saveData();
+      showToast('Aporte registrado.');
+    };
+
+    const saveFundoAjuste = app.querySelector('[data-action="save-fundo-ajuste"]');
+    if(saveFundoAjuste) saveFundoAjuste.onclick = async ()=>{
+      if(!isSindico()) return;
+      const amount = parseFloat(app.querySelector('#fundo-new-total').value);
+      const date = app.querySelector('#fundo-date').value || todayISO();
+      const note = app.querySelector('#fundo-note').value.trim();
+      if(isNaN(amount) || amount < 0) return;
+      data.financial.fundoObra.movements.push({ id:'fo_'+Date.now(), type:'ajuste', amount, date, note, createdAt:new Date().toISOString() });
+      ui.modal = null;
+      render();
+      await saveData();
+      showToast('Valor do fundo atualizado.');
+    };
+
+    app.querySelectorAll('[data-action="del-fundo-mov"]').forEach(el=>{
+      el.onclick = async ()=>{
+        if(!isSindico()) return;
+        data.financial.fundoObra.movements = data.financial.fundoObra.movements.filter(m=>m.id!==el.dataset.id);
+        render();
+        await saveData();
+      };
+    });
+
+    const saveBuildingName = app.querySelector('[data-action="save-building-name"]');
+    if(saveBuildingName) saveBuildingName.onclick = async ()=>{
+      const v = app.querySelector('#building-name-input').value.trim();
+      if(!v) return;
+      data.buildingName = v;
+      render();
+      await saveData();
+      showToast('Nome atualizado.');
+    };
+
+    const saveSindicoPin = app.querySelector('[data-action="save-sindico-pin"]');
+    if(saveSindicoPin) saveSindicoPin.onclick = async ()=>{
+      const v = app.querySelector('#sindico-pin-input').value.trim();
+      if(!v) return;
+      data.sindicoPin = v;
+      render();
+      await saveData();
+      showToast('Senha do síndico atualizada.');
+    };
+
+    const saveFinanceiroPin = app.querySelector('[data-action="save-financeiro-pin"]');
+    if(saveFinanceiroPin) saveFinanceiroPin.onclick = async ()=>{
+      const v = app.querySelector('#financeiro-pin-input').value.trim();
+      if(!v) return;
+      data.financeiroPin = v;
+      render();
+      await saveData();
+      showToast('Senha do financeiro atualizada.');
+    };
+
+    app.querySelectorAll('[data-action="toggle-unit-menu"]').forEach(el=>{
+      el.onclick = (e)=>{ e.stopPropagation(); ui.unitMenuOpen = ui.unitMenuOpen === el.dataset.id ? null : el.dataset.id; render(); };
+    });
+    app.querySelectorAll('[data-action="open-unit-owner"]').forEach(el=>{
+      el.onclick = ()=>{ ui.detailUnitId = el.dataset.id; ui.modal='unit-owner'; ui.unitMenuOpen=null; render(); };
+    });
+    app.querySelectorAll('[data-action="open-unit-issues"]').forEach(el=>{
+      el.onclick = ()=>{ ui.detailUnitId = el.dataset.id; ui.modal='unit-issues'; ui.unitMenuOpen=null; render(); };
+    });
+
+    const saveUnitDetail = app.querySelector('[data-action="save-unit-detail"]');
+    if(saveUnitDetail) saveUnitDetail.onclick = async ()=>{
+      const u = data.units.find(x=>x.id===saveUnitDetail.dataset.id);
+      if(!u) return;
+      u.proprietario = app.querySelector('#unit-owner-input').value.trim();
+      u.proprietarioTelefone = app.querySelector('#unit-owner-phone-input').value.trim();
+      u.inquilino = app.querySelector('#unit-tenant-input').value.trim();
+      u.inquilinoTelefone = app.querySelector('#unit-tenant-phone-input').value.trim();
+      render();
+      await saveData();
+      showToast('Dados da unidade salvos.');
+    };
+
+    app.querySelectorAll('[data-action="add-history"]').forEach(el=>{
+      el.onclick = async ()=>{
+        const u = data.units.find(x=>x.id===el.dataset.id);
+        const note = app.querySelector('#new-history-note').value.trim();
+        const date = app.querySelector('#new-history-date').value || todayISO();
+        if(!u || !note) return;
+        u.history.push({ id:'h_'+Date.now(), date, note, createdAt:new Date().toISOString() });
+        render();
+        await saveData();
+        showToast('Histórico atualizado.');
+      };
+    });
+
+    app.querySelectorAll('[data-action="del-history"]').forEach(el=>{
+      el.onclick = async ()=>{
+        const u = data.units.find(x=>x.id===el.dataset.uid);
+        if(!u) return;
+        u.history = u.history.filter(h=>h.id!==el.dataset.id);
+        render();
+        await saveData();
+      };
+    });
+
+    app.querySelectorAll('[data-action="add-issue"]').forEach(el=>{
+      el.onclick = async ()=>{
+        const u = data.units.find(x=>x.id===el.dataset.id);
+        const title = app.querySelector('#new-issue-title').value.trim();
+        const description = app.querySelector('#new-issue-desc').value.trim();
+        const date = app.querySelector('#new-issue-date').value || todayISO();
+        if(!u || !title) return;
+        u.issues.push({ id:'i_'+Date.now(), date, title, description, status:'aberto', createdAt:new Date().toISOString() });
+        render();
+        await saveData();
+        showToast('Problema registrado.');
+      };
+    });
+
+    app.querySelectorAll('[data-action="toggle-issue"]').forEach(el=>{
+      el.onclick = async ()=>{
+        const u = data.units.find(x=>x.id===el.dataset.uid);
+        const issue = u && u.issues.find(i=>i.id===el.dataset.id);
+        if(!issue) return;
+        issue.status = issue.status === 'resolvido' ? 'aberto' : 'resolvido';
+        render();
+        await saveData();
+      };
+    });
+
+    app.querySelectorAll('[data-action="del-issue"]').forEach(el=>{
+      el.onclick = async ()=>{
+        const u = data.units.find(x=>x.id===el.dataset.uid);
+        if(!u) return;
+        u.issues = u.issues.filter(i=>i.id!==el.dataset.id);
+        render();
+        await saveData();
+      };
+    });
+
+    app.querySelectorAll('[data-action="edit-unit-id"]').forEach(el=>{
+      el.onchange = async ()=>{
+        const oldId = el.dataset.id;
+        const newId = el.value.trim();
+        if(!newId || newId === oldId){ el.value = oldId; return; }
+        if(data.units.some(x=>x.id === newId)){
+          showToast('Já existe uma unidade ' + newId + '.');
+          el.value = oldId;
+          return;
+        }
+        const u = data.units.find(x=>x.id===oldId);
+        if(!u) return;
+        u.id = newId;
+        data.financial.entries.forEach(e=>{ if(e.unit === oldId) e.unit = newId; });
+        render();
+        await saveData();
+        showToast('Unidade renomeada para ' + newId + '.');
+      };
+    });
+  }
+
+  function csvEscape(v){
+    const s = String(v==null?'':v);
+    return '"' + s.replace(/"/g,'""') + '"';
+  }
+  function exportFinanceiroCsv(){
+    const header = ['Tipo','Conta','Valor','Data','Forma de pagamento','Unidade','Comprovante','Observações'];
+    const lines = [header.map(csvEscape).join(';')];
+    const source = ui.finMonthFilter === 'todos'
+      ? data.financial.entries
+      : data.financial.entries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
+    [...source].sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
+      lines.push([
+        (FIN_TYPES[e.type]||FIN_TYPES.despesa).label,
+        e.conta, String(e.amount).replace('.',','), fmtDate(e.date),
+        PAGTO_LABELS[e.formaPagamento]||'', e.unit||'', e.comprovante||'', e.obs||''
+      ].map(csvEscape).join(';'));
+    });
+    const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const suffix = ui.finMonthFilter === 'todos' ? '' : '-'+ui.finMonthFilter;
+    a.href = url; a.download = 'financeiro-'+data.buildingName.replace(/\s+/g,'-')+suffix+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function submitPin(){
+    const val = (document.getElementById('pin-input')||{value:ui.pinValue}).value;
+    const expected = ui.pinTarget === '__sindico__' ? data.sindicoPin : data.financeiroPin;
+    if(val === expected){
+      session = { role: ui.pinTarget === '__sindico__' ? 'sindico' : 'financeiro' };
+      ui.pinTarget=null; ui.pinValue=''; ui.pinError=''; ui.tab='mural';
+      render();
+    } else {
+      ui.pinError = 'Senha incorreta.';
+      render();
+    }
+  }
+
+  document.addEventListener('click', (e)=>{
+    if(ui.unitMenuOpen && !e.target.closest('.unit-menu-wrap')){
+      ui.unitMenuOpen = null;
+      render();
+    }
+  });
+
+  loadData();
+})();
+</script>
