@@ -130,9 +130,11 @@
   .admin-tile .tile-num{color:var(--brass);font-size:14px;letter-spacing:0.1em;text-transform:uppercase;}
   .admin-tile .tile-label{color:#a99a7c;}
 
-  .role-grid{grid-template-columns:1fr;}
-  .role-grid .admin-tile{grid-column:auto;padding:22px 8px;}
-  .role-grid .admin-tile .tile-num{font-size:18px;}
+  .role-grid{grid-template-columns:1fr;grid-auto-flow:row;}
+.role-grid .admin-tile{grid-column:span 1;}
+  
+ .role-grid .admin-tile{grid-column:1 / -1;padding:22px 8px;}
+.role-grid .admin-tile .tile-num{font-size:18px;}
 
   .pin-panel{
     background:var(--paper);
