@@ -416,35 +416,32 @@
     th,td{padding:8px 6px;}
   }
 
-/* ---------- MOBILE NAV & LOGIN ---------- */
-.bottom-nav{display:none;}
-@media (max-width:640px){
-  .tabs{display:none;}
-  .bottom-nav{
-    display:flex;
-    position:fixed;bottom:0;left:0;right:0;
-    background:var(--surface);
-    border-top:1px solid var(--line);
-    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
-    z-index:40;
+  /* ---------- MOBILE NAV & LOGIN ---------- */
+  .bottom-nav{display:none;}
+  @media (max-width:640px){
+    .tabs{display:none;}
+    .bottom-nav{
+      display:flex;
+      position:fixed;bottom:0;left:0;right:0;
+      background:var(--surface);
+      border-top:1px solid var(--line);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+      z-index:40;
+    }
+    .bn-btn{
+      flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+      background:none;border:none;color:var(--text-dim);
+      padding:6px 2px;font-size:10px;
+    }
+    .bn-btn .bn-icon{font-size:18px;line-height:1;}
+    .bn-btn.active{color:var(--brass);}
+    .content{padding-bottom:80px;}
+    .login-wrap{align-items:flex-start;padding-top:12vh;min-height:100vh;}
+    .board-frame{padding:20px;border-radius:16px;}
+    .board-title{font-size:23px;}
+    .tile-grid{gap:8px;}
+    .topbar{padding:12px 16px;}
   }
-  .bn-btn{
-    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
-    background:none;border:none;color:var(--text-dim);
-    padding:6px 2px;font-size:10px;
-  }
-  .bn-btn .bn-icon{font-size:18px;line-height:1;}
-  .bn-btn.active{color:var(--brass);}
-  .content{padding-bottom:80px;}
-  .login-wrap{align-items:flex-start;padding-top:12vh;min-height:100vh;}
-  .board-frame{padding:20px;border-radius:16px;}
-  .board-title{font-size:23px;}
-  .tile-grid{gap:8px;}
-  .topbar{padding:12px 16px;}
-}
-
-  
-  
 </style>
 
 <div id="app"></div>
@@ -657,7 +654,7 @@
     const canSeeFinance = hasFinancialAccess();
     const canSeeSettings = isSindico();
 
-let tabsHtml = `<button class="tab-btn ${ui.tab==='mural'?'active':''}" data-action="tab" data-tab="mural">Mural de avisos</button>`;
+    let tabsHtml = `<button class="tab-btn ${ui.tab==='mural'?'active':''}" data-action="tab" data-tab="mural">Mural de avisos</button>`;
     if(canSeeFinance){
       tabsHtml += `<button class="tab-btn ${ui.tab==='financeiro'?'active':''}" data-action="tab" data-tab="financeiro">Financeiro</button>`;
       tabsHtml += `<button class="tab-btn ${ui.tab==='dashboard'?'active':''}" data-action="tab" data-tab="dashboard">Dashboard</button>`;
@@ -687,8 +684,6 @@ let tabsHtml = `<button class="tab-btn ${ui.tab==='mural'?'active':''}" data-act
     `;
 
     let body = '';
-
-    let body = '';
     if(ui.tab === 'mural') body = renderMural();
     else if(ui.tab === 'financeiro') body = canSeeFinance ? renderFinanceiro() : renderLocked();
     else if(ui.tab === 'dashboard') body = canSeeFinance ? renderFinDashboard() : renderLocked();
@@ -707,7 +702,7 @@ let tabsHtml = `<button class="tab-btn ${ui.tab==='mural'?'active':''}" data-act
           </div>
           <button class="logout-btn" data-action="logout">Sair</button>
         </div>
-<div class="tabs">${tabsHtml}</div>
+        <div class="tabs">${tabsHtml}</div>
         <div class="content">${body}</div>
       </div>
       ${bottomNavHtml}
