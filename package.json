@@ -1,9 +1,8 @@
 {
-  "name": "predio-app",
+  "name": "barizza",
   "version": "1.0.0",
   "private": true,
-  "description": "Portaria digital do predio - mural de avisos, financeiro e unidades",
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.4"
+    "@neondatabase/serverless": "^0.9.0"
   }
 }
