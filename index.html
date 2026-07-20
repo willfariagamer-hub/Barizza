@@ -730,6 +730,7 @@
         <div class="aviso-title">${escapeHtml(a.title)}</div>
         ${a.type==='mudanca' && a.moveDate ? `<div class="fin-details" style="margin-bottom:8px;"><span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">${fmtDate(a.moveDate)} · ${formatSlot(a.moveSlot)}</span></div>` : ''}
         <div class="aviso-msg">${escapeHtml(a.message)}</div>
+        ${a.photo ? `<div class="fin-details" style="margin-top:8px;"><a class="fin-tag fin-link" href="${escapeAttr(a.photo)}" target="_blank" rel="noopener">ver foto ↗</a></div>` : ''}
         <div class="card-actions-row">
           <button class="aviso-del" data-action="del-aviso" data-id="${a.id}">remover</button>
         </div>
@@ -1250,6 +1251,7 @@
             </div>
             <div class="field"><label>Título</label><input type="text" id="aviso-title" placeholder="Ex: Mudança apto 302"></div>
             <div class="field"><label>Mensagem</label><textarea id="aviso-msg" placeholder="Detalhes do aviso..."></textarea></div>
+            <div class="field"><label>Foto (link, opcional)</label><input type="text" id="aviso-photo" placeholder="Cole aqui o link da foto (Drive, Fotos, etc.)"></div>
             <div class="modal-actions">
               <button class="ghost-btn" data-action="close-modal">Cancelar</button>
               <button class="primary-btn" data-action="save-aviso">Publicar</button>
@@ -1536,6 +1538,7 @@
       const type = app.querySelector('#aviso-type').value;
       const title = app.querySelector('#aviso-title').value.trim();
       const msg = app.querySelector('#aviso-msg').value.trim();
+      const photo = app.querySelector('#aviso-photo').value.trim();
       if(!title || !msg) return;
 
       let moveDate = null, moveSlot = null;
@@ -1564,7 +1567,7 @@
         id: 'a_'+Date.now(), type, title, message: msg,
         author: currentAuthorId(),
         date: todayISO(), createdAt: new Date().toISOString(),
-        moveDate, moveSlot
+        moveDate, moveSlot, photo
       });
       ui.modal = null;
       render();
