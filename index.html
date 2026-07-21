@@ -609,7 +609,7 @@
   function renderLogin(){
     let pinPanel = '';
     if(ui.pinTarget){
-      const labels = { __sindico__:'Síndico', __financeiro__:'Financeiro' };
+      const labels = { __sindico__:'Síndico', __financeiro__:'Proprietário' };
       const label = labels[ui.pinTarget] || '';
       pinPanel = `
         <div class="pin-panel">
@@ -638,10 +638,10 @@
               <div class="tile-num">Síndico</div>
               <div class="tile-label">Acesso total</div>
             </button>
-            <button class="tile admin-tile" data-action="select-role" data-role="__financeiro__">
-              <div class="tile-num">Financeiro</div>
-              <div class="tile-label">Mural + Financeiro</div>
-            </button>
+<button class="tile admin-tile" data-action="select-role" data-role="__financeiro__">
+  <div class="tile-num">Proprietário</div>
+  <div class="tile-label">Mural + Financeiro</div>
+</button>
           </div>
           ${pinPanel}
         </div>
@@ -650,9 +650,9 @@
   }
 
   function renderDashboard(){
-    const badge = isSindico() ? 'SIN' : 'FIN';
-    const name = isSindico() ? 'Síndico' : 'Financeiro';
-    const role = isSindico() ? 'Acesso total' : 'Mural + Financeiro';
+const badge = isSindico() ? 'SIN' : 'PRO';
+const name = isSindico() ? 'Síndico' : 'Proprietário';
+const role = isSindico() ? 'Acesso total' : 'Mural + Financeiro';
 
     const canSeeFinance = hasFinancialAccess();
     const canSeeSettings = isSindico();
@@ -718,7 +718,7 @@
     return `<div class="locked"><div class="locked-icon">🔒</div>Esta área é restrita.</div>`;
   }
 
-  const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Financeiro' };
+const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' };
   function renderAvisoCard(a){
     const t = TYPES[a.type] || TYPES.geral;
     return `
@@ -1088,7 +1088,7 @@
       </div>
 
       <div class="settings-block">
-        <div class="settings-block-title">Senha do financeiro</div>
+        <div class="settings-block-title">Senha do proprietário</div>
         <div class="field" style="max-width:220px;">
           <input type="text" id="financeiro-pin-input" value="${escapeAttr(data.financeiroPin)}" maxlength="6">
         </div>
