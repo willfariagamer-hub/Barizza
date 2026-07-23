@@ -131,10 +131,8 @@
   .admin-tile .tile-label{color:#a99a7c;}
 
   .role-grid{grid-template-columns:1fr;grid-auto-flow:row;}
-.role-grid .admin-tile{grid-column:span 1;}
-  
- .role-grid .admin-tile{grid-column:1 / -1;padding:22px 8px;}
-.role-grid .admin-tile .tile-num{font-size:18px;}
+  .role-grid .admin-tile{grid-column:1 / -1;padding:22px 8px;}
+  .role-grid .admin-tile .tile-num{font-size:18px;}
 
   .pin-panel{
     background:var(--paper);
@@ -629,7 +627,7 @@
         <div class="board-frame">
           <div class="board-screw-bl"></div><div class="board-screw-br"></div>
           <div class="board-header">
-            <div class="board-eyebrow">Portaria digital</div>
+            <div class="board-eyebrow">Portal da transparência</div>
             <div class="board-title display">${data.buildingName}</div>
             <div class="board-sub">Acesso restrito à administração</div>
           </div>
@@ -638,10 +636,10 @@
               <div class="tile-num">Síndico</div>
               <div class="tile-label">Acesso total</div>
             </button>
-<button class="tile admin-tile" data-action="select-role" data-role="__financeiro__">
-  <div class="tile-num">Proprietário</div>
-  <div class="tile-label">Mural + Financeiro</div>
-</button>
+            <button class="tile admin-tile" data-action="select-role" data-role="__financeiro__">
+              <div class="tile-num">Proprietário</div>
+              <div class="tile-label">Mural + Financeiro</div>
+            </button>
           </div>
           ${pinPanel}
         </div>
@@ -650,9 +648,9 @@
   }
 
   function renderDashboard(){
-const badge = isSindico() ? 'SIN' : 'PRO';
-const name = isSindico() ? 'Síndico' : 'Proprietário';
-const role = isSindico() ? 'Acesso total' : 'Mural + Financeiro';
+    const badge = isSindico() ? 'SIN' : 'PRO';
+    const name = isSindico() ? 'Síndico' : 'Proprietário';
+    const role = isSindico() ? 'Acesso total' : 'Mural + Financeiro';
 
     const canSeeFinance = hasFinancialAccess();
     const canSeeSettings = isSindico();
@@ -718,7 +716,7 @@ const role = isSindico() ? 'Acesso total' : 'Mural + Financeiro';
     return `<div class="locked"><div class="locked-icon">🔒</div>Esta área é restrita.</div>`;
   }
 
-const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' };
+  const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' };
   function renderAvisoCard(a){
     const t = TYPES[a.type] || TYPES.geral;
     return `
@@ -730,7 +728,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
         <div class="aviso-title">${escapeHtml(a.title)}</div>
         ${a.type==='mudanca' && a.moveDate ? `<div class="fin-details" style="margin-bottom:8px;"><span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">${fmtDate(a.moveDate)} · ${formatSlot(a.moveSlot)}</span></div>` : ''}
         <div class="aviso-msg">${escapeHtml(a.message)}</div>
-        ${a.photo ? `<div class="fin-details" style="margin-top:8px;"><a class="fin-tag fin-link" href="${escapeAttr(a.photo)}" target="_blank" rel="noopener">ver foto ↗</a></div>` : ''}
+        ${toList(a.photos).length ? `<div class="fin-details" style="margin-top:8px;">${toList(a.photos).map((p,i)=>`<a class="fin-tag fin-link" href="${escapeAttr(p)}" target="_blank" rel="noopener">foto ${i+1} ↗</a>`).join('')}</div>` : ''}
         <div class="card-actions-row">
           <button class="aviso-del" data-action="del-aviso" data-id="${a.id}">remover</button>
         </div>
@@ -1008,7 +1006,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
         <div class="fin-details">
           ${e.formaPagamento ? `<span class="fin-tag">${PAGTO_LABELS[e.formaPagamento]||e.formaPagamento}</span>` : ''}
           ${e.vencimento ? `<span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">vence ${fmtDate(e.vencimento)}</span>` : ''}
-          ${e.comprovante ? `<a class="fin-tag fin-link" href="${escapeAttr(e.comprovante)}" target="_blank" rel="noopener">comprovante ↗</a>` : ''}
+          ${toList(e.comprovante).map((c,i)=>`<a class="fin-tag fin-link" href="${escapeAttr(c)}" target="_blank" rel="noopener">comprovante ${i+1} ↗</a>`).join('')}
         </div>
         ${e.obs ? `<div class="aviso-msg" style="margin-top:6px;">${escapeHtml(e.obs)}</div>` : ''}
         ${isSindico() ? `<button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button>` : ''}
@@ -1251,7 +1249,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
             </div>
             <div class="field"><label>Título</label><input type="text" id="aviso-title" placeholder="Ex: Mudança apto 302"></div>
             <div class="field"><label>Mensagem</label><textarea id="aviso-msg" placeholder="Detalhes do aviso..."></textarea></div>
-            <div class="field"><label>Foto (link, opcional)</label><input type="text" id="aviso-photo" placeholder="Cole aqui o link da foto (Drive, Fotos, etc.)"></div>
+            <div class="field"><label>Fotos (links, opcional)</label><textarea id="aviso-photo" placeholder="Cole um link por linha (Drive, Fotos, etc.)"></textarea></div>
             <div class="modal-actions">
               <button class="ghost-btn" data-action="close-modal">Cancelar</button>
               <button class="primary-btn" data-action="save-aviso">Publicar</button>
@@ -1282,7 +1280,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
               </select>
             </div>
             <div class="field" id="fin-boleto-field" style="display:none;"><label>Data de vencimento do boleto</label><input type="date" id="fin-boleto-vencimento"></div>
-            <div class="field"><label>Comprovante (link)</label><input type="text" id="fin-comprovante" placeholder="Cole aqui o link da foto/PDF do comprovante"></div>
+            <div class="field"><label>Comprovantes (links)</label><textarea id="fin-comprovante" placeholder="Cole um link por linha (foto/PDF do comprovante)"></textarea></div>
             <div class="field"><label>Unidade (opcional)</label>
               <select id="fin-unit"><option value="">—</option>${data.units.map(u=>`<option value="${u.id}">${u.id}</option>`).join('')}</select>
             </div>
@@ -1364,6 +1362,11 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
   }
   function escapeAttr(s){
     return (s||'').replace(/"/g,'&quot;');
+  }
+  function toList(v){
+    if(Array.isArray(v)) return v.filter(Boolean);
+    if(typeof v === 'string' && v.trim()) return [v.trim()];
+    return [];
   }
 
   // ---------------- EVENTS ----------------
@@ -1538,7 +1541,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
       const type = app.querySelector('#aviso-type').value;
       const title = app.querySelector('#aviso-title').value.trim();
       const msg = app.querySelector('#aviso-msg').value.trim();
-      const photo = app.querySelector('#aviso-photo').value.trim();
+      const photos = app.querySelector('#aviso-photo').value.split('\n').map(s=>s.trim()).filter(Boolean);
       if(!title || !msg) return;
 
       let moveDate = null, moveSlot = null;
@@ -1567,7 +1570,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
         id: 'a_'+Date.now(), type, title, message: msg,
         author: currentAuthorId(),
         date: todayISO(), createdAt: new Date().toISOString(),
-        moveDate, moveSlot, photo
+        moveDate, moveSlot, photos
       });
       ui.modal = null;
       render();
@@ -1592,7 +1595,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
       const date = app.querySelector('#fin-date').value || todayISO();
       const formaPagamento = app.querySelector('#fin-pagto').value;
       const vencimento = formaPagamento === 'boleto' ? (app.querySelector('#fin-boleto-vencimento').value || null) : null;
-      const comprovante = app.querySelector('#fin-comprovante').value.trim();
+      const comprovante = app.querySelector('#fin-comprovante').value.split('\n').map(s=>s.trim()).filter(Boolean);
       const unit = app.querySelector('#fin-unit').value;
       const obs = app.querySelector('#fin-obs').value.trim();
       if(!conta || isNaN(amount)) return;
@@ -1832,7 +1835,7 @@ const AUTHOR_LABELS = { __sindico__:'Síndico', __financeiro__:'Proprietário' }
       lines.push([
         (FIN_TYPES[e.type]||FIN_TYPES.despesa).label,
         e.conta, String(e.amount).replace('.',','), fmtDate(e.date),
-        PAGTO_LABELS[e.formaPagamento]||'', e.unit||'', e.comprovante||'', e.obs||''
+        PAGTO_LABELS[e.formaPagamento]||'', e.unit||'', toList(e.comprovante).join(' | '), e.obs||''
       ].map(csvEscape).join(';'));
     });
     const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
