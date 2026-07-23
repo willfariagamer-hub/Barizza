@@ -305,6 +305,17 @@
   }
   .fin-link{color:var(--brass);text-decoration:none;border-color:rgba(198,161,91,0.35);}
   .fin-link:hover{text-decoration:underline;}
+  .photo-link{
+    display:inline-flex;align-items:center;gap:6px;
+    background:linear-gradient(160deg, rgba(198,161,91,0.16), rgba(198,161,91,0.06));
+    border:1px solid rgba(198,161,91,0.4);
+    color:var(--brass);text-decoration:none;
+    font-size:12px;font-weight:600;
+    padding:6px 12px 6px 10px;border-radius:20px;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .photo-link:hover{background:linear-gradient(160deg, rgba(198,161,91,0.28), rgba(198,161,91,0.12));transform:translateY(-1px);}
+  .photo-link::before{content:'🖼';font-size:13px;}
   th{text-align:left;color:var(--text-dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;padding:8px 10px;border-bottom:1px solid var(--line-strong);}
   td{padding:10px 10px;border-bottom:1px solid var(--line);}
   tr:last-child td{border-bottom:none;}
@@ -728,9 +739,9 @@
         <div class="aviso-title">${escapeHtml(a.title)}</div>
         ${a.type==='mudanca' && a.moveDate ? `<div class="fin-details" style="margin-bottom:8px;"><span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">${fmtDate(a.moveDate)} · ${formatSlot(a.moveSlot)}</span></div>` : ''}
         <div class="aviso-msg">${escapeHtml(a.message)}</div>
-        ${toList(a.photos).length ? `<div class="fin-details" style="margin-top:8px;">${toList(a.photos).map((p,i)=>`<a class="fin-tag fin-link" href="${escapeAttr(p)}" target="_blank" rel="noopener">foto ${i+1} ↗</a>`).join('')}</div>` : ''}
+        ${toList(a.photos).length ? `<div class="fin-details" style="margin-top:8px;">${toList(a.photos).map((p,i)=>`<a class="photo-link" href="${escapeAttr(p)}" target="_blank" rel="noopener">Foto ${i+1}</a>`).join('')}</div>` : ''}
         <div class="card-actions-row">
-          <button class="ghost-btn small-btn" data-action="edit-aviso" data-id="${a.id}">editar</button>
+          ${isSindico() ? `<button class="ghost-btn small-btn" data-action="edit-aviso" data-id="${a.id}">editar</button>` : ''}
           ${isSindico() ? `<button class="aviso-del" data-action="del-aviso" data-id="${a.id}">remover</button>` : ''}
         </div>
       </div>
@@ -1007,7 +1018,7 @@
         <div class="fin-details">
           ${e.formaPagamento ? `<span class="fin-tag">${PAGTO_LABELS[e.formaPagamento]||e.formaPagamento}</span>` : ''}
           ${e.vencimento ? `<span class="fin-tag" style="color:var(--brass);border-color:rgba(198,161,91,0.4);">vence ${fmtDate(e.vencimento)}</span>` : ''}
-          ${toList(e.comprovante).map((c,i)=>`<a class="fin-tag fin-link" href="${escapeAttr(c)}" target="_blank" rel="noopener">comprovante ${i+1} ↗</a>`).join('')}
+          ${toList(e.comprovante).map((c,i)=>`<a class="photo-link" href="${escapeAttr(c)}" target="_blank" rel="noopener">Comprovante ${i+1}</a>`).join('')}
         </div>
         ${e.obs ? `<div class="aviso-msg" style="margin-top:6px;">${escapeHtml(e.obs)}</div>` : ''}
         ${isSindico() ? `<button class="ghost-btn small-btn" data-action="edit-fin" data-id="${e.id}">editar</button> <button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button>` : ''}
@@ -1448,7 +1459,7 @@
     const openAviso = app.querySelector('[data-action="open-aviso-modal"]');
     if(openAviso) openAviso.onclick = ()=>{ ui.editingAvisoId=null; ui.modal='aviso'; render(); };
     app.querySelectorAll('[data-action="edit-aviso"]').forEach(el=>{
-      el.onclick = ()=>{ ui.editingAvisoId = el.dataset.id; ui.modal='aviso'; render(); };
+      el.onclick = ()=>{ if(!isSindico()) return; ui.editingAvisoId = el.dataset.id; ui.modal='aviso'; render(); };
     });
     const openFin = app.querySelector('[data-action="open-fin-modal"]');
     if(openFin) openFin.onclick = ()=>{ if(!isSindico()) return; ui.editingFinId=null; ui.modal='financeiro'; render(); };
