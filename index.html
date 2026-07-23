@@ -512,7 +512,8 @@
       financeiroPin: '0001',
       units: defaultUnits(),
       announcements: [],
-      financial: { entries: [], fundoObra: { movements: [] }, contasFixas: [] }
+      financial: { entries: [], fundoObra: { movements: [] }, contasFixas: [] },
+      accessLogs: []
     };
   }
 
@@ -531,6 +532,7 @@
     if(data.adminPin && !data.sindicoPin){ data.sindicoPin = data.adminPin; }
     if(!data.sindicoPin) data.sindicoPin = '0000';
     if(!data.financeiroPin) data.financeiroPin = '0001';
+    if(!data.accessLogs) data.accessLogs = [];
     (data.units||[]).forEach(u=>{
       if(u.proprietario === undefined) u.proprietario = '';
       if(u.proprietarioTelefone === undefined) u.proprietarioTelefone = '';
@@ -1118,6 +1120,27 @@
             <input type="file" id="import-backup-input" accept="application/json" style="display:none;">
           </label>
         </div>
+      </div>
+
+      <div class="settings-block">
+        <div class="settings-block-title">Log de acessos</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">
+          Registro de cada login feito no app (Síndico ou Proprietário), com data e hora.
+        </div>
+        ${(data.accessLogs||[]).length ? `
+          <details class="collapse-block" open>
+            <summary>Ver últimos acessos (${data.accessLogs.length})</summary>
+            <div style="margin-top:8px;">
+              ${data.accessLogs.slice(0,50).map(l => `
+                <div class="unit-row" style="font-size:12px;">
+                  <span class="fin-tag" style="color:${l.role==='sindico'?'var(--brass)':'var(--steel)'};border-color:${l.role==='sindico'?'rgba(198,161,91,0.4)':'rgba(92,127,166,0.4)'};">${l.role==='sindico'?'Síndico':'Proprietário'}</span>
+                  <span class="mono" style="color:var(--text-dim);">${fmtDate(l.date)} · ${l.time}</span>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+          <button class="ghost-btn small-btn" style="margin-top:10px;" data-action="clear-access-logs">Limpar log</button>
+        ` : `<div style="color:var(--text-dim);font-size:12px;">Nenhum acesso registrado ainda.</div>`}
       </div>
     `;
   }
@@ -1731,6 +1754,15 @@
       showToast('Senha do financeiro atualizada.');
     };
 
+    const clearLogs = app.querySelector('[data-action="clear-access-logs"]');
+    if(clearLogs) clearLogs.onclick = async ()=>{
+      if(!isSindico()) return;
+      data.accessLogs = [];
+      render();
+      await saveData();
+      showToast('Log de acessos limpo.');
+    };
+
     const exportBackup = app.querySelector('[data-action="export-backup"]');
     if(exportBackup) exportBackup.onclick = ()=>{
       const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -1757,6 +1789,7 @@
         if(!data.financial) data.financial = { entries: [], fundoObra: { movements: [] }, contasFixas: [] };
         if(!data.financial.fundoObra) data.financial.fundoObra = { movements: [] };
         if(!data.financial.contasFixas) data.financial.contasFixas = [];
+        if(!data.accessLogs) data.accessLogs = [];
         render();
         await saveData();
         showToast('Backup importado com sucesso.');
@@ -1897,9 +1930,13 @@
     const val = (document.getElementById('pin-input')||{value:ui.pinValue}).value;
     const expected = ui.pinTarget === '__sindico__' ? data.sindicoPin : data.financeiroPin;
     if(val === expected){
-      session = { role: ui.pinTarget === '__sindico__' ? 'sindico' : 'financeiro' };
+      const role = ui.pinTarget === '__sindico__' ? 'sindico' : 'financeiro';
+      session = { role };
       ui.pinTarget=null; ui.pinValue=''; ui.pinError=''; ui.tab='mural';
+      data.accessLogs.unshift({ id:'log_'+Date.now(), role, date: todayISO(), time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) });
+      if(data.accessLogs.length > 200) data.accessLogs = data.accessLogs.slice(0,200);
       render();
+      saveData();
     } else {
       ui.pinError = 'Senha incorreta.';
       render();
