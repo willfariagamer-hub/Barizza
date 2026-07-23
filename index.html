@@ -452,7 +452,7 @@
   const STORAGE_KEY = 'predio-data-v1';
   let data = null;
   let session = { role: null }; // role: null | 'sindico' | 'financeiro'
-  let ui = { tab:'mural', filterType:'todos', finMonthFilter:'todos', finShowOnlyFixas:false, modal:null, detailUnitId:null, unitMenuOpen:null, pinTarget:null, pinValue:'', pinError:'' };
+  let ui = { tab:'mural', filterType:'todos', finMonthFilter:'todos', finShowOnlyFixas:false, modal:null, detailUnitId:null, unitMenuOpen:null, pinTarget:null, pinValue:'', pinError:'', editingAvisoId:null, editingFinId:null };
 
   const TYPES = {
     mudanca:   { label:'Mudança',    color:'var(--brass)' },
@@ -730,7 +730,8 @@
         <div class="aviso-msg">${escapeHtml(a.message)}</div>
         ${toList(a.photos).length ? `<div class="fin-details" style="margin-top:8px;">${toList(a.photos).map((p,i)=>`<a class="fin-tag fin-link" href="${escapeAttr(p)}" target="_blank" rel="noopener">foto ${i+1} ↗</a>`).join('')}</div>` : ''}
         <div class="card-actions-row">
-          <button class="aviso-del" data-action="del-aviso" data-id="${a.id}">remover</button>
+          <button class="ghost-btn small-btn" data-action="edit-aviso" data-id="${a.id}">editar</button>
+          ${isSindico() ? `<button class="aviso-del" data-action="del-aviso" data-id="${a.id}">remover</button>` : ''}
         </div>
       </div>
     `;
@@ -1009,7 +1010,7 @@
           ${toList(e.comprovante).map((c,i)=>`<a class="fin-tag fin-link" href="${escapeAttr(c)}" target="_blank" rel="noopener">comprovante ${i+1} ↗</a>`).join('')}
         </div>
         ${e.obs ? `<div class="aviso-msg" style="margin-top:6px;">${escapeHtml(e.obs)}</div>` : ''}
-        ${isSindico() ? `<button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button>` : ''}
+        ${isSindico() ? `<button class="ghost-btn small-btn" data-action="edit-fin" data-id="${e.id}">editar</button> <button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button>` : ''}
       </div>
     `;
     }).join('') : `<div class="empty">Nenhum lançamento ${ui.finShowOnlyFixas||ui.finMonthFilter!=='todos'?'com esse filtro':'ainda'}.</div>`;
@@ -1231,15 +1232,16 @@
       return renderUnitIssuesModal(ui.detailUnitId);
     }
     if(ui.modal === 'aviso'){
-      const opts = Object.keys(TYPES).map(k => `<option value="${k}">${TYPES[k].label}</option>`).join('');
+      const editing = ui.editingAvisoId ? data.announcements.find(x=>x.id===ui.editingAvisoId) : null;
+      const opts = Object.keys(TYPES).map(k => `<option value="${k}" ${editing && editing.type===k?'selected':''}>${TYPES[k].label}</option>`).join('');
       return `
         <div class="modal-backdrop" data-action="backdrop">
           <div class="modal">
-            <div class="modal-title">Novo aviso</div>
+            <div class="modal-title">${editing ? 'Editar aviso' : 'Novo aviso'}</div>
             <div class="field"><label>Tipo</label><select id="aviso-type">${opts}</select></div>
             <div class="field" id="mudanca-date-field">
               <label>Data da mudança</label>
-              <input type="date" id="aviso-move-date">
+              <input type="date" id="aviso-move-date" value="${editing && editing.moveDate ? editing.moveDate : ''}">
               <div style="font-size:11px;color:var(--text-dim);margin-top:5px;">Seg a sex, 08:00–17:00 · sáb, 08:00–12:00</div>
             </div>
             <div class="field" id="mudanca-slot-field">
@@ -1247,47 +1249,52 @@
               <select id="aviso-move-slot"><option value="">Selecione a data primeiro</option></select>
               <div id="aviso-move-error" class="pin-error" style="display:none;"></div>
             </div>
-            <div class="field"><label>Título</label><input type="text" id="aviso-title" placeholder="Ex: Mudança apto 302"></div>
-            <div class="field"><label>Mensagem</label><textarea id="aviso-msg" placeholder="Detalhes do aviso..."></textarea></div>
-            <div class="field"><label>Fotos (links, opcional)</label><textarea id="aviso-photo" placeholder="Cole um link por linha (Drive, Fotos, etc.)"></textarea></div>
+            <div class="field"><label>Título</label><input type="text" id="aviso-title" placeholder="Ex: Mudança apto 302" value="${editing ? escapeAttr(editing.title) : ''}"></div>
+            <div class="field"><label>Mensagem</label><textarea id="aviso-msg" placeholder="Detalhes do aviso...">${editing ? escapeHtml(editing.message) : ''}</textarea></div>
+            <div class="field"><label>Fotos (links, opcional)</label><textarea id="aviso-photo" placeholder="Cole um link por linha (Drive, Fotos, etc.)">${editing ? toList(editing.photos).join('\n') : ''}</textarea></div>
             <div class="modal-actions">
               <button class="ghost-btn" data-action="close-modal">Cancelar</button>
-              <button class="primary-btn" data-action="save-aviso">Publicar</button>
+              <button class="primary-btn" data-action="save-aviso">${editing ? 'Salvar alterações' : 'Publicar'}</button>
             </div>
           </div>
         </div>
       `;
     }
     if(ui.modal === 'financeiro'){
+      const editing = ui.editingFinId ? data.financial.entries.find(x=>x.id===ui.editingFinId) : null;
       return `
         <div class="modal-backdrop" data-action="backdrop">
           <div class="modal">
-            <div class="modal-title">Novo lançamento</div>
+            <div class="modal-title">${editing ? 'Editar lançamento' : 'Novo lançamento'}</div>
             <div class="field"><label>Tipo</label>
-              <select id="fin-type"><option value="receita">Receita</option><option value="despesa">Despesa</option><option value="corte">Corte de gastos</option></select>
+              <select id="fin-type">
+                <option value="receita" ${editing && editing.type==='receita'?'selected':''}>Receita</option>
+                <option value="despesa" ${editing && editing.type==='despesa'?'selected':''}>Despesa</option>
+                <option value="corte" ${editing && editing.type==='corte'?'selected':''}>Corte de gastos</option>
+              </select>
             </div>
-            <div class="field"><label>Conta</label><input type="text" id="fin-conta" placeholder="Ex: Taxa condominial, Reparo elevador, Água..."></div>
-            <div class="field"><label>Valor (R$)</label><input type="number" id="fin-amount" step="0.01" placeholder="0,00"></div>
-            <div class="field"><label>Data</label><input type="date" id="fin-date" value="${todayISO()}"></div>
+            <div class="field"><label>Conta</label><input type="text" id="fin-conta" placeholder="Ex: Taxa condominial, Reparo elevador, Água..." value="${editing ? escapeAttr(editing.conta) : ''}"></div>
+            <div class="field"><label>Valor (R$)</label><input type="number" id="fin-amount" step="0.01" placeholder="0,00" value="${editing ? editing.amount : ''}"></div>
+            <div class="field"><label>Data</label><input type="date" id="fin-date" value="${editing ? editing.date : todayISO()}"></div>
             <div class="field"><label>Forma de pagamento</label>
               <select id="fin-pagto">
                 <option value="">—</option>
-                <option value="pix">Pix</option>
-                <option value="boleto">Boleto</option>
-                <option value="dinheiro">Dinheiro</option>
-                <option value="transferencia">Transferência</option>
-                <option value="cartao">Cartão</option>
+                <option value="pix" ${editing && editing.formaPagamento==='pix'?'selected':''}>Pix</option>
+                <option value="boleto" ${editing && editing.formaPagamento==='boleto'?'selected':''}>Boleto</option>
+                <option value="dinheiro" ${editing && editing.formaPagamento==='dinheiro'?'selected':''}>Dinheiro</option>
+                <option value="transferencia" ${editing && editing.formaPagamento==='transferencia'?'selected':''}>Transferência</option>
+                <option value="cartao" ${editing && editing.formaPagamento==='cartao'?'selected':''}>Cartão</option>
               </select>
             </div>
-            <div class="field" id="fin-boleto-field" style="display:none;"><label>Data de vencimento do boleto</label><input type="date" id="fin-boleto-vencimento"></div>
-            <div class="field"><label>Comprovantes (links)</label><textarea id="fin-comprovante" placeholder="Cole um link por linha (foto/PDF do comprovante)"></textarea></div>
+            <div class="field" id="fin-boleto-field" style="display:none;"><label>Data de vencimento do boleto</label><input type="date" id="fin-boleto-vencimento" value="${editing && editing.vencimento ? editing.vencimento : ''}"></div>
+            <div class="field"><label>Comprovantes (links)</label><textarea id="fin-comprovante" placeholder="Cole um link por linha (foto/PDF do comprovante)">${editing ? toList(editing.comprovante).join('\n') : ''}</textarea></div>
             <div class="field"><label>Unidade (opcional)</label>
-              <select id="fin-unit"><option value="">—</option>${data.units.map(u=>`<option value="${u.id}">${u.id}</option>`).join('')}</select>
+              <select id="fin-unit"><option value="">—</option>${data.units.map(u=>`<option value="${u.id}" ${editing && editing.unit===u.id?'selected':''}>${u.id}</option>`).join('')}</select>
             </div>
-            <div class="field"><label>Observações</label><textarea id="fin-obs" placeholder="Detalhes, número da nota, contato do prestador..."></textarea></div>
+            <div class="field"><label>Observações</label><textarea id="fin-obs" placeholder="Detalhes, número da nota, contato do prestador...">${editing ? escapeHtml(editing.obs||'') : ''}</textarea></div>
             <div class="modal-actions">
               <button class="ghost-btn" data-action="close-modal">Cancelar</button>
-              <button class="primary-btn" data-action="save-fin">Salvar</button>
+              <button class="primary-btn" data-action="save-fin">${editing ? 'Salvar alterações' : 'Salvar'}</button>
             </div>
           </div>
         </div>
@@ -1439,9 +1446,15 @@
     }
 
     const openAviso = app.querySelector('[data-action="open-aviso-modal"]');
-    if(openAviso) openAviso.onclick = ()=>{ ui.modal='aviso'; render(); };
+    if(openAviso) openAviso.onclick = ()=>{ ui.editingAvisoId=null; ui.modal='aviso'; render(); };
+    app.querySelectorAll('[data-action="edit-aviso"]').forEach(el=>{
+      el.onclick = ()=>{ ui.editingAvisoId = el.dataset.id; ui.modal='aviso'; render(); };
+    });
     const openFin = app.querySelector('[data-action="open-fin-modal"]');
-    if(openFin) openFin.onclick = ()=>{ if(!isSindico()) return; ui.modal='financeiro'; render(); };
+    if(openFin) openFin.onclick = ()=>{ if(!isSindico()) return; ui.editingFinId=null; ui.modal='financeiro'; render(); };
+    app.querySelectorAll('[data-action="edit-fin"]').forEach(el=>{
+      el.onclick = ()=>{ if(!isSindico()) return; ui.editingFinId = el.dataset.id; ui.modal='financeiro'; render(); };
+    });
     const finPagtoSelect = app.querySelector('#fin-pagto');
     const finBoletoField = app.querySelector('#fin-boleto-field');
     if(finPagtoSelect && finBoletoField){
@@ -1559,27 +1572,38 @@
           moveError.textContent = 'Escolha um horário disponível.';
           return;
         }
-        if(takenMoveSlots(moveDate, null).has(moveSlot)){
+        if(takenMoveSlots(moveDate, ui.editingAvisoId).has(moveSlot)){
           moveError.style.display='block';
           moveError.textContent = 'Esse horário acabou de ficar indisponível. Escolha outro.';
           return;
         }
       }
 
-      data.announcements.push({
-        id: 'a_'+Date.now(), type, title, message: msg,
-        author: currentAuthorId(),
-        date: todayISO(), createdAt: new Date().toISOString(),
-        moveDate, moveSlot, photos
-      });
+      if(ui.editingAvisoId){
+        const existing = data.announcements.find(a=>a.id===ui.editingAvisoId);
+        if(existing){
+          existing.type = type; existing.title = title; existing.message = msg;
+          existing.moveDate = moveDate; existing.moveSlot = moveSlot; existing.photos = photos;
+        }
+      } else {
+        data.announcements.push({
+          id: 'a_'+Date.now(), type, title, message: msg,
+          author: currentAuthorId(),
+          date: todayISO(), createdAt: new Date().toISOString(),
+          moveDate, moveSlot, photos
+        });
+      }
+      const wasEditing = !!ui.editingAvisoId;
       ui.modal = null;
+      ui.editingAvisoId = null;
       render();
       await saveData();
-      showToast('Aviso publicado.');
+      showToast(wasEditing ? 'Aviso atualizado.' : 'Aviso publicado.');
     };
 
     app.querySelectorAll('[data-action="del-aviso"]').forEach(el=>{
       el.onclick = async ()=>{
+        if(!isSindico()) return;
         data.announcements = data.announcements.filter(a=>a.id!==el.dataset.id);
         render();
         await saveData();
@@ -1599,11 +1623,22 @@
       const unit = app.querySelector('#fin-unit').value;
       const obs = app.querySelector('#fin-obs').value.trim();
       if(!conta || isNaN(amount)) return;
-      data.financial.entries.push({ id:'f_'+Date.now(), type, conta, amount, date, formaPagamento, vencimento, comprovante, unit: unit||null, obs });
+      if(ui.editingFinId){
+        const existing = data.financial.entries.find(e=>e.id===ui.editingFinId);
+        if(existing){
+          existing.type = type; existing.conta = conta; existing.amount = amount; existing.date = date;
+          existing.formaPagamento = formaPagamento; existing.vencimento = vencimento;
+          existing.comprovante = comprovante; existing.unit = unit||null; existing.obs = obs;
+        }
+      } else {
+        data.financial.entries.push({ id:'f_'+Date.now(), type, conta, amount, date, formaPagamento, vencimento, comprovante, unit: unit||null, obs });
+      }
+      const wasEditing = !!ui.editingFinId;
       ui.modal = null;
+      ui.editingFinId = null;
       render();
       await saveData();
-      showToast('Lançamento salvo.');
+      showToast(wasEditing ? 'Lançamento atualizado.' : 'Lançamento salvo.');
     };
 
     const exportCsv = app.querySelector('[data-action="export-csv"]');
