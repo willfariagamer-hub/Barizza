@@ -1021,7 +1021,7 @@
           ${toList(e.comprovante).map((c,i)=>`<a class="photo-link" href="${escapeAttr(c)}" target="_blank" rel="noopener">Comprovante ${i+1}</a>`).join('')}
         </div>
         ${e.obs ? `<div class="aviso-msg" style="margin-top:6px;">${escapeHtml(e.obs)}</div>` : ''}
-        ${isSindico() ? `<button class="ghost-btn small-btn" data-action="edit-fin" data-id="${e.id}">editar</button> <button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button>` : ''}
+        ${isSindico() ? `<div class="card-actions-row"><button class="ghost-btn small-btn" data-action="edit-fin" data-id="${e.id}">editar</button><button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button></div>` : ''}
       </div>
     `;
     }).join('') : `<div class="empty">Nenhum lançamento ${ui.finShowOnlyFixas||ui.finMonthFilter!=='todos'?'com esse filtro':'ainda'}.</div>`;
