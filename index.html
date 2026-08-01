@@ -595,6 +595,10 @@
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
 
+  function entryMonthKey(e){
+    return (e.vencimento ? e.vencimento : e.date).slice(0,7);
+  }
+
   function isSindico(){ return session.role === 'sindico'; }
   function isFinanceiro(){ return session.role === 'financeiro'; }
   function isStaff(){ return isSindico() || isFinanceiro(); }
@@ -782,7 +786,7 @@
   function financeChartMonths(){
     const map = {};
     data.financial.entries.forEach(e=>{
-      const m = e.date.slice(0,7);
+      const m = entryMonthKey(e);
       if(!map[m]) map[m] = {receita:0, despesa:0, corte:0};
       map[m][e.type] = (map[m][e.type]||0) + Number(e.amount);
     });
@@ -880,8 +884,8 @@
 
   function renderFinanceiro(){
     const allEntries = [...data.financial.entries].sort((a,b)=> b.date.localeCompare(a.date));
-    const months = [...new Set(allEntries.map(e=>e.date.slice(0,7)))].sort().reverse();
-    let entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
+    const months = [...new Set(allEntries.map(e=>entryMonthKey(e)))].sort().reverse();
+    let entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>entryMonthKey(e)===ui.finMonthFilter);
 
     const monthOptions = `<option value="todos">Todos os meses</option>` +
       months.map(m => `<option value="${m}" ${ui.finMonthFilter===m?'selected':''}>${monthLabel(m)}</option>`).join('');
@@ -926,8 +930,8 @@
 
   function renderFinDashboard(){
     const allEntries = [...data.financial.entries].sort((a,b)=> b.date.localeCompare(a.date));
-    const months = [...new Set(allEntries.map(e=>e.date.slice(0,7)))].sort().reverse();
-    const entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
+    const months = [...new Set(allEntries.map(e=>entryMonthKey(e)))].sort().reverse();
+    const entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>entryMonthKey(e)===ui.finMonthFilter);
 
     const receitas = entries.filter(e=>e.type==='receita').reduce((s,e)=>s+Number(e.amount),0);
     const despesas = entries.filter(e=>e.type==='despesa').reduce((s,e)=>s+Number(e.amount),0);
@@ -1709,7 +1713,7 @@
     const lines = [header.map(csvEscape).join(';')];
     const source = ui.finMonthFilter === 'todos'
       ? data.financial.entries
-      : data.financial.entries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
+      : data.financial.entries.filter(e=>entryMonthKey(e)===ui.finMonthFilter);
     [...source].sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
       lines.push([
         (FIN_TYPES[e.type]||FIN_TYPES.despesa).label,
