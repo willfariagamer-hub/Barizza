@@ -463,7 +463,7 @@
   const STORAGE_KEY = 'predio-data-v1';
   let data = null;
   let session = { role: null }; // role: null | 'sindico' | 'financeiro'
-  let ui = { tab:'mural', filterType:'todos', finMonthFilter:'todos', finShowOnlyFixas:false, modal:null, detailUnitId:null, unitMenuOpen:null, pinTarget:null, pinValue:'', pinError:'', editingAvisoId:null, editingFinId:null };
+  let ui = { tab:'mural', filterType:'todos', finMonthFilter:'todos', modal:null, detailUnitId:null, unitMenuOpen:null, pinTarget:null, pinValue:'', pinError:'', editingAvisoId:null, editingFinId:null };
 
   const TYPES = {
     mudanca:   { label:'Mudança',    color:'var(--brass)' },
@@ -671,7 +671,7 @@
     let tabsHtml = `<button class="tab-btn ${ui.tab==='mural'?'active':''}" data-action="tab" data-tab="mural">Mural de avisos</button>`;
     if(canSeeFinance){
       tabsHtml += `<button class="tab-btn ${ui.tab==='financeiro'?'active':''}" data-action="tab" data-tab="financeiro">Financeiro</button>`;
-      tabsHtml += `<button class="tab-btn ${ui.tab==='dashboard'?'active':''}" data-action="tab" data-tab="dashboard">Dashboard</button>`;
+      tabsHtml += `<button class="tab-btn ${ui.tab==='dashboard'?'active':''}" data-action="tab" data-tab="dashboard">Relatório</button>`;
     }
     if(isSindico()){
       tabsHtml += `<button class="tab-btn ${ui.tab==='unidades'?'active':''}" data-action="tab" data-tab="unidades">Unidades</button>`;
@@ -683,7 +683,7 @@
     const navItems = [{tab:'mural', icon:'📋', label:'Mural'}];
     if(canSeeFinance){
       navItems.push({tab:'financeiro', icon:'💰', label:'Financeiro'});
-      navItems.push({tab:'dashboard', icon:'📊', label:'Painel'});
+      navItems.push({tab:'dashboard', icon:'📊', label:'Relatório'});
     }
     if(isSindico()) navItems.push({tab:'unidades', icon:'🏢', label:'Unidades'});
     if(canSeeSettings) navItems.push({tab:'ajustes', icon:'⚙️', label:'Ajustes'});
@@ -840,84 +840,6 @@
     `;
   }
 
-  function fixaChartMonths(){
-    const map = {};
-    data.financial.entries.filter(e=>e.contaFixaId).forEach(e=>{
-      const m = e.mesReferencia || e.date.slice(0,7);
-      if(!map[m]) map[m] = {pago:0, pendente:0};
-      if(e.pago) map[m].pago += Number(e.amount);
-      else map[m].pendente += Number(e.amount);
-    });
-    return Object.keys(map).sort().slice(-6).map(m=>({month:m, ...map[m]}));
-  }
-
-  function renderContaFixaChart(){
-    const months = fixaChartMonths();
-    if(months.length === 0) return '';
-    const w = 640, h = 170, padL=46, padB=26, padT=10, padR=10;
-    const chartW = w - padL - padR;
-    const chartH = h - padT - padB;
-    const maxVal = Math.max(1, ...months.map(m=>m.pago+m.pendente));
-    const groupW = chartW / months.length;
-    const barW = Math.min(28, groupW/2);
-
-    const gridLines = [0.5,1].map(f=>{
-      const y = padT + chartH - chartH*f;
-      return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--line)" stroke-width="1"/>
-        <text x="${padL-8}" y="${y+3}" font-size="9" fill="var(--text-dim)" text-anchor="end">${fmtMoneyShort(maxVal*f)}</text>`;
-    }).join('');
-
-    const bars = months.map((m,i)=>{
-      const cx = padL + groupW*i + groupW/2;
-      const pagoH = (m.pago/maxVal)*chartH;
-      const pendH = (m.pendente/maxVal)*chartH;
-      const pendY = padT + chartH - pendH;
-      const pagoY = pendY - pagoH;
-      return `
-        <rect x="${cx-barW/2}" y="${pendY}" width="${barW}" height="${Math.max(pendH,0)}" rx="3" fill="var(--brick)"/>
-        <rect x="${cx-barW/2}" y="${pagoY}" width="${barW}" height="${Math.max(pagoH,0)}" rx="3" fill="var(--teal)"/>
-        <text x="${cx}" y="${h-padB+15}" font-size="10" fill="var(--text-dim)" text-anchor="middle">${monthShort(m.month)}</text>
-      `;
-    }).join('');
-
-    return `
-      <details class="collapse-block">
-        <summary>Ver contas fixas por mês</summary>
-        <div style="margin-top:4px;">
-          <div style="display:flex;gap:12px;font-size:11px;color:var(--text-dim);margin-bottom:6px;">
-            <span><span class="legend-dot" style="background:var(--teal);"></span>Pago</span>
-            <span><span class="legend-dot" style="background:var(--brick);"></span>Em aberto/atraso</span>
-          </div>
-          <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;">
-            ${gridLines}
-            ${bars}
-          </svg>
-        </div>
-      </details>
-    `;
-  }
-
-  function currentMonthStr(){
-    return todayISO().slice(0,7);
-  }
-  function contaFixaEntryFor(templateId, mes){
-    return data.financial.entries.find(e=>e.contaFixaId===templateId && e.mesReferencia===mes);
-  }
-  function contaFixaStatus(template, entry){
-    const todayDay = new Date().getDate();
-    const overdue = template.diaVencimento && todayDay > template.diaVencimento;
-    if(!entry) return overdue ? 'atraso-sem-lancamento' : 'nao-lancado';
-    if(entry.pago) return 'pago';
-    return overdue ? 'atraso' : 'aberto';
-  }
-  const CF_STATUS = {
-    'pago':                { label:'Pago', color:'var(--teal)' },
-    'aberto':               { label:'Em aberto', color:'var(--steel)' },
-    'atraso':               { label:'Em atraso', color:'var(--brick)' },
-    'nao-lancado':          { label:'Não lançado', color:'var(--neutral)' },
-    'atraso-sem-lancamento':{ label:'Em atraso — não lançado', color:'var(--brick)' }
-  };
-
   function fundoBalance(movements){
     const sorted = [...movements].sort((a,b)=>(a.date+a.createdAt).localeCompare(b.date+b.createdAt));
     let running = 0;
@@ -956,51 +878,10 @@
     `;
   }
 
-  function renderContasFixas(){
-    const mes = currentMonthStr();
-    const templates = data.financial.contasFixas;
-    const overdueCount = templates.filter(t=>{
-      const st = contaFixaStatus(t, contaFixaEntryFor(t.id, mes));
-      return st === 'atraso' || st === 'atraso-sem-lancamento';
-    }).length;
-    const rows = templates.length ? templates.map(t => {
-      const entry = contaFixaEntryFor(t.id, mes);
-      const status = contaFixaStatus(t, entry);
-      const st = CF_STATUS[status];
-      return `
-        <div class="cf-row">
-          <div class="cf-row-main">
-            <div>
-              <div style="font-weight:600;font-size:13px;">${escapeHtml(t.nome)}</div>
-              <div style="font-size:11px;color:var(--text-dim);">${t.diaVencimento ? 'Vence dia '+t.diaVencimento : 'Sem dia fixo'}</div>
-            </div>
-            <span class="fin-tag" style="color:${st.color};border-color:${st.color};">${st.label}</span>
-          </div>
-          <div class="cf-row-actions">
-            <input type="number" class="cf-valor-input mono" data-action="cf-set-valor" data-id="${t.id}" step="0.01" placeholder="Valor deste mês" value="${entry ? entry.amount : ''}" ${isSindico()?'':'readonly'}>
-            ${isSindico() ? `
-              ${entry ? `<button class="ghost-btn small-btn" data-action="cf-toggle-pago" data-id="${t.id}">${entry.pago?'Reabrir':'Marcar pago'}</button>` : ''}
-              <button class="row-del" data-action="cf-del-template" data-id="${t.id}">remover conta</button>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }).join('') : `<div style="color:var(--text-dim);font-size:12px;padding:8px 0;">Nenhuma conta fixa cadastrada.</div>`;
-
-    return `
-      <div class="card" style="margin-bottom:12px;">
-        <div class="stat-label" style="margin-bottom:6px;">Contas fixas</div>
-        ${overdueCount>0 ? `<div class="cf-warning">⚠ ${overdueCount} conta${overdueCount>1?'s':''} fixa${overdueCount>1?'s':''} em atraso este mês.</div>` : ''}
-        ${rows}
-      </div>
-    `;
-  }
-
   function renderFinanceiro(){
     const allEntries = [...data.financial.entries].sort((a,b)=> b.date.localeCompare(a.date));
     const months = [...new Set(allEntries.map(e=>e.date.slice(0,7)))].sort().reverse();
     let entries = ui.finMonthFilter === 'todos' ? allEntries : allEntries.filter(e=>e.date.slice(0,7)===ui.finMonthFilter);
-    if(ui.finShowOnlyFixas) entries = entries.filter(e=>e.contaFixaId);
 
     const monthOptions = `<option value="todos">Todos os meses</option>` +
       months.map(m => `<option value="${m}" ${ui.finMonthFilter===m?'selected':''}>${monthLabel(m)}</option>`).join('');
@@ -1014,7 +895,7 @@
           <span class="aviso-meta">${fmtDate(e.date)}${e.unit ? ' · Apto '+e.unit : ''}</span>
         </div>
         <div class="fin-top-row">
-          <div class="aviso-title" style="margin:2px 0;">${escapeHtml(e.conta)}${e.contaFixaId ? ' <span class="fin-tag" style="margin-left:4px;">conta fixa</span>' : ''}</div>
+          <div class="aviso-title" style="margin:2px 0;">${escapeHtml(e.conta)}</div>
           <div class="${ft.cls}" style="font-size:15px;font-weight:600;">${ft.sign} ${fmtMoney(e.amount)}</div>
         </div>
         <div class="fin-details">
@@ -1026,7 +907,7 @@
         ${isSindico() ? `<div class="card-actions-row"><button class="ghost-btn small-btn" data-action="edit-fin" data-id="${e.id}">editar</button><button class="aviso-del" data-action="del-fin" data-id="${e.id}">remover</button></div>` : ''}
       </div>
     `;
-    }).join('') : `<div class="empty">Nenhum lançamento ${ui.finShowOnlyFixas||ui.finMonthFilter!=='todos'?'com esse filtro':'ainda'}.</div>`;
+    }).join('') : `<div class="empty">Nenhum lançamento ${ui.finMonthFilter!=='todos'?'com esse filtro':'ainda'}.</div>`;
 
     return `
       <div class="section-head">
@@ -1035,16 +916,10 @@
       <div class="fin-toolbar">
         ${isSindico() ? `<button class="primary-btn small-btn" data-action="open-fin-modal">+ Lançamento</button>` : ''}
         ${isSindico() ? `<button class="ghost-btn small-btn" data-action="open-fundo-ajuste">Atualizar fundo</button>` : ''}
-        ${isSindico() ? `<button class="ghost-btn small-btn" data-action="open-contafixa-nova">+ Nova conta fixa</button>` : ''}
         <button class="ghost-btn small-btn" data-action="export-csv">Exportar CSV</button>
       </div>
       ${renderFundoObra()}
-      ${renderContasFixas()}
       <select id="fin-month-filter" class="fin-month-select">${monthOptions}</select>
-      <div class="chip-row">
-        <button class="chip ${!ui.finShowOnlyFixas?'active':''}" data-action="fin-filter-all">Todos os lançamentos</button>
-        <button class="chip ${ui.finShowOnlyFixas?'active':''}" data-action="fin-filter-fixas">Só contas fixas</button>
-      </div>
       ${cards}
     `;
   }
@@ -1062,8 +937,22 @@
     const monthOptions = `<option value="todos">Todos os meses</option>` +
       months.map(m => `<option value="${m}" ${ui.finMonthFilter===m?'selected':''}>${monthLabel(m)}</option>`).join('');
 
+    const tableRows = entries.length ? entries.map(e => {
+      const ft = FIN_TYPES[e.type] || FIN_TYPES.despesa;
+      return `
+        <tr>
+          <td class="mono">${fmtDate(e.date)}</td>
+          <td><span class="type-badge" style="background:${ft.color};font-size:9px;">${ft.label}</span></td>
+          <td>${escapeHtml(e.conta)}</td>
+          <td>${e.unit || '—'}</td>
+          <td>${e.formaPagamento ? (PAGTO_LABELS[e.formaPagamento]||e.formaPagamento) : '—'}</td>
+          <td class="mono ${ft.cls}" style="text-align:right;">${ft.sign} ${fmtMoney(e.amount)}</td>
+        </tr>
+      `;
+    }).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">Nenhum lançamento neste período.</td></tr>`;
+
     return `
-      <div class="section-title display" style="margin-bottom:14px;">Dashboard</div>
+      <div class="section-title display" style="margin-bottom:14px;">Relatório</div>
       <div class="fin-summary-row">
         <select id="fin-month-filter" class="fin-month-select">${monthOptions}</select>
         <div class="stat-row compact">
@@ -1074,7 +963,19 @@
         </div>
       </div>
       ${renderFinChart()}
-      ${renderContaFixaChart()}
+      <div class="card" style="padding:0;overflow-x:auto;margin-top:14px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th><th>Tipo</th><th>Conta</th><th>Unidade</th><th>Pagamento</th><th style="text-align:right;">Valor</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="ghost-btn small-btn" data-action="export-csv">Exportar CSV</button>
+      </div>
     `;
   }
 
@@ -1367,32 +1268,6 @@
         </div>
       `;
     }
-    if(ui.modal === 'contafixa-nova'){
-      return `
-        <div class="modal-backdrop" data-action="backdrop">
-          <div class="modal">
-            <div class="modal-title">Nova conta fixa</div>
-            <div class="field"><label>Nome</label><input type="text" id="cf-nome" placeholder="Ex: Água, Luz, Portaria remota..."></div>
-            <div class="field"><label>Dia de vencimento (opcional)</label><input type="number" id="cf-dia" min="1" max="31" placeholder="Ex: 10"></div>
-            <div class="field"><label>Forma de pagamento padrão (opcional)</label>
-              <select id="cf-pagto">
-                <option value="">—</option>
-                <option value="pix">Pix</option>
-                <option value="boleto">Boleto</option>
-                <option value="dinheiro">Dinheiro</option>
-                <option value="transferencia">Transferência</option>
-                <option value="cartao">Cartão</option>
-              </select>
-            </div>
-            <div class="field"><label>Observações (opcional)</label><textarea id="cf-obs" placeholder="Detalhes, contrato, contato do fornecedor..."></textarea></div>
-            <div class="modal-actions">
-              <button class="ghost-btn" data-action="close-modal">Cancelar</button>
-              <button class="primary-btn" data-action="save-contafixa-nova">Adicionar</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
     return '';
   }
 
@@ -1503,81 +1378,6 @@
     const openFundoAjuste = app.querySelector('[data-action="open-fundo-ajuste"]');
     if(openFundoAjuste) openFundoAjuste.onclick = ()=>{ if(!isSindico()) return; ui.modal='fundo-ajuste'; render(); };
 
-    const finFilterAll = app.querySelector('[data-action="fin-filter-all"]');
-    if(finFilterAll) finFilterAll.onclick = ()=>{ ui.finShowOnlyFixas = false; render(); };
-    const finFilterFixas = app.querySelector('[data-action="fin-filter-fixas"]');
-    if(finFilterFixas) finFilterFixas.onclick = ()=>{ ui.finShowOnlyFixas = true; render(); };
-
-    const openContaFixaNova = app.querySelector('[data-action="open-contafixa-nova"]');
-    if(openContaFixaNova) openContaFixaNova.onclick = ()=>{ if(!isSindico()) return; ui.modal='contafixa-nova'; render(); };
-
-    const saveContaFixaNova = app.querySelector('[data-action="save-contafixa-nova"]');
-    if(saveContaFixaNova) saveContaFixaNova.onclick = async ()=>{
-      if(!isSindico()) return;
-      const nome = app.querySelector('#cf-nome').value.trim();
-      const dia = parseInt(app.querySelector('#cf-dia').value, 10);
-      const formaPagamento = app.querySelector('#cf-pagto').value;
-      const obs = app.querySelector('#cf-obs').value.trim();
-      if(!nome) return;
-      data.financial.contasFixas.push({
-        id:'cf_'+Date.now(), nome,
-        diaVencimento: isNaN(dia) ? null : Math.min(31, Math.max(1,dia)),
-        formaPagamento, obs, createdAt: new Date().toISOString()
-      });
-      ui.modal = null;
-      render();
-      await saveData();
-      showToast('Conta fixa cadastrada.');
-    };
-
-    app.querySelectorAll('[data-action="cf-del-template"]').forEach(el=>{
-      el.onclick = async ()=>{
-        if(!isSindico()) return;
-        data.financial.contasFixas = data.financial.contasFixas.filter(t=>t.id!==el.dataset.id);
-        render();
-        await saveData();
-      };
-    });
-
-    app.querySelectorAll('[data-action="cf-set-valor"]').forEach(el=>{
-      el.onchange = async ()=>{
-        if(!isSindico()) return;
-        const template = data.financial.contasFixas.find(t=>t.id===el.dataset.id);
-        if(!template) return;
-        const amount = parseFloat(el.value);
-        if(isNaN(amount) || amount < 0) return;
-        const mes = currentMonthStr();
-        let entry = contaFixaEntryFor(template.id, mes);
-        if(entry){
-          entry.amount = amount;
-        } else {
-          const dia = template.diaVencimento || 1;
-          const dueDate = mes + '-' + String(dia).padStart(2,'0');
-          data.financial.entries.push({
-            id:'f_'+Date.now(), type:'despesa', conta: template.nome, amount,
-            date: dueDate, formaPagamento: template.formaPagamento||'', comprovante:'',
-            unit: null, obs: template.obs||'',
-            contaFixaId: template.id, mesReferencia: mes, pago:false
-          });
-        }
-        render();
-        await saveData();
-        showToast('Valor atualizado.');
-      };
-    });
-
-    app.querySelectorAll('[data-action="cf-toggle-pago"]').forEach(el=>{
-      el.onclick = async ()=>{
-        if(!isSindico()) return;
-        const template = data.financial.contasFixas.find(t=>t.id===el.dataset.id);
-        if(!template) return;
-        const entry = contaFixaEntryFor(template.id, currentMonthStr());
-        if(!entry) return;
-        entry.pago = !entry.pago;
-        render();
-        await saveData();
-      };
-    });
     const closeModal = app.querySelector('[data-action="close-modal"]');
     if(closeModal) closeModal.onclick = ()=>{ ui.modal=null; render(); };
     const backdrop = app.querySelector('[data-action="backdrop"]');
